@@ -29,12 +29,12 @@ Edit the MCP configuration file directly:
 
 **macOS/Linux:**
 ```bash
-~/.config/antigravity/mcp_config.json
+~/.config/Antigravity/mcp_config.json
 ```
 
 **Windows:**
 ```
-%APPDATA%\antigravity\mcp_config.json
+%APPDATA%\Antigravity\mcp_config.json
 ```
 
 **Configuration:**
