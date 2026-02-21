@@ -1,0 +1,463 @@
+# API Reference - Tools
+
+Complete reference for all OpenCode MCP Server tools.
+
+## Tool Summary
+
+| Category | Count | Tools |
+|----------|-------|-------|
+| Execution | 6 | `opencode_run`, `opencode_session_*` |
+| Files | 5 | `opencode_file_*`, `opencode_find_*` |
+| Config | 6 | `opencode_model_*`, `opencode_config_*`, `opencode_auth_*` |
+| Agents | 2 | `opencode_agent_*` |
+| Skills | 3 | `opencode_skill_*` |
+| MCP | 4 | `opencode_mcp_*` |
+| Tools | 3 | `opencode_tool_*`, `opencode_permission_*` |
+| **Total** | **29** | |
+
+---
+
+## Execution Tools
+
+### `opencode_run`
+
+Execute a coding task through OpenCode AI agent.
+
+**When to use**: Implementing features, refactoring, debugging, explaining code, or any software engineering task.
+
+**Input Schema**:
+```json
+{
+  "prompt": "string (required) - The task or question for OpenCode",
+  "model": "string (optional) - Model in format provider/model",
+  "agent": "string (optional) - Agent to use: build, plan, or custom agent name",
+  "files": "string[] (optional) - File paths to attach as context",
+  "noReply": "boolean (optional) - Add context without triggering AI response"
+}
+```
+
+**Example**:
+```json
+{
+  "prompt": "Implement a React hook for fetching data with loading and error states",
+  "model": "anthropic/claude-sonnet-4",
+  "files": ["src/hooks/useUser.ts"]
+}
+```
+
+---
+
+### `opencode_session_create`
+
+Create a new OpenCode session for multi-turn conversations.
+
+**Input Schema**:
+```json
+{
+  "title": "string (optional) - Session title",
+  "model": "string (optional) - Model in format provider/model",
+  "agent": "string (optional) - Agent to use"
+}
+```
+
+**Returns**: `{ sessionId: string, title: string }`
+
+---
+
+### `opencode_session_prompt`
+
+Send a prompt to an existing session.
+
+**Input Schema**:
+```json
+{
+  "sessionId": "string (required) - Session ID",
+  "prompt": "string (required) - The message to send",
+  "files": "string[] (optional) - File paths to attach",
+  "noReply": "boolean (optional) - Add context without AI response"
+}
+```
+
+---
+
+### `opencode_session_list`
+
+List all OpenCode sessions.
+
+**Input Schema**: `{}` (no parameters)
+
+---
+
+### `opencode_session_abort`
+
+Abort a running session.
+
+**Input Schema**:
+```json
+{
+  "sessionId": "string (required) - Session ID"
+}
+```
+
+---
+
+### `opencode_session_share`
+
+Share a session. Returns a shareable link.
+
+**Input Schema**:
+```json
+{
+  "sessionId": "string (required) - Session ID"
+}
+```
+
+**Returns**: `{ shareUrl: string }`
+
+---
+
+## File Tools
+
+### `opencode_file_read`
+
+Read a file from the project.
+
+**Input Schema**:
+```json
+{
+  "path": "string (required) - File path relative to project root"
+}
+```
+
+---
+
+### `opencode_file_search`
+
+Search for text pattern in project files.
+
+**Input Schema**:
+```json
+{
+  "pattern": "string (required) - Search pattern (regex supported)",
+  "directory": "string (optional) - Limit to directory"
+}
+```
+
+---
+
+### `opencode_find_files`
+
+Find files and directories by name pattern.
+
+**Input Schema**:
+```json
+{
+  "query": "string (required) - File name pattern (fuzzy match)",
+  "type": "string (optional) - 'file' or 'directory'",
+  "limit": "number (optional) - Max results (1-200)"
+}
+```
+
+---
+
+### `opencode_find_symbols`
+
+Find workspace symbols (functions, classes, variables).
+
+**Input Schema**:
+```json
+{
+  "query": "string (required) - Symbol name to search for"
+}
+```
+
+---
+
+### `opencode_file_status`
+
+Get git status for tracked files.
+
+**Input Schema**: `{}` (no parameters)
+
+---
+
+## Config Tools
+
+### `opencode_model_list`
+
+List all available models from configured providers.
+
+**Input Schema**:
+```json
+{
+  "provider": "string (optional) - Filter by provider ID",
+  "refresh": "boolean (optional) - Refresh cache from models.dev"
+}
+```
+
+---
+
+### `opencode_model_configure`
+
+Configure model options.
+
+**Input Schema**:
+```json
+{
+  "provider": "string (required) - Provider ID",
+  "model": "string (required) - Model ID",
+  "options": "object (required) - Model options"
+}
+```
+
+**Example**:
+```json
+{
+  "provider": "anthropic",
+  "model": "claude-sonnet-4",
+  "options": {
+    "temperature": 0.1,
+    "thinking": { "type": "enabled", "budgetTokens": 16000 }
+  }
+}
+```
+
+---
+
+### `opencode_provider_list`
+
+List all providers and their connection status.
+
+**Input Schema**: `{}`
+
+---
+
+### `opencode_config_get`
+
+Get current OpenCode configuration.
+
+**Input Schema**: `{}`
+
+---
+
+### `opencode_config_update`
+
+Update OpenCode configuration settings.
+
+**Input Schema**:
+```json
+{
+  "model": "string (optional) - Default model",
+  "smallModel": "string (optional) - Small model for lightweight tasks",
+  "autoupdate": "boolean (optional) - Auto-update setting",
+  "theme": "string (optional) - Theme name",
+  "defaultAgent": "string (optional) - Default agent name"
+}
+```
+
+---
+
+### `opencode_auth_set`
+
+Set authentication credentials for a provider.
+
+**Input Schema**:
+```json
+{
+  "provider": "string (required) - Provider ID",
+  "type": "string (required) - 'api' or 'oauth'",
+  "key": "string (optional) - API key (for api type)",
+  "token": "string (optional) - OAuth token (for oauth type)"
+}
+```
+
+---
+
+## Agent Tools
+
+### `opencode_agent_list`
+
+List all available agents (primary and subagents).
+
+**Input Schema**: `{}`
+
+**Returns**:
+```json
+{
+  "primary": [{ "name": "build", "description": "...", "model": "..." }],
+  "subagents": [{ "name": "explore", "description": "...", "model": "..." }]
+}
+```
+
+---
+
+### `opencode_agent_delegate`
+
+Delegate a task to a specific agent.
+
+**Input Schema**:
+```json
+{
+  "agent": "string (required) - Agent name (build, plan, explore, etc.)",
+  "prompt": "string (required) - Task for the agent",
+  "sessionId": "string (optional) - Session ID (creates new if not provided)",
+  "model": "string (optional) - Model to use"
+}
+```
+
+---
+
+## Skill Tools
+
+### `opencode_skill_list`
+
+List all available skills from SKILL.md files.
+
+**Input Schema**: `{}`
+
+---
+
+### `opencode_skill_load`
+
+Load a skill and return its content.
+
+**Input Schema**:
+```json
+{
+  "name": "string (required) - Skill name to load"
+}
+```
+
+---
+
+### `opencode_skill_create`
+
+Create a new skill (SKILL.md file).
+
+**Input Schema**:
+```json
+{
+  "name": "string (required) - Skill name (lowercase, hyphens only)",
+  "description": "string (required) - When to use this skill",
+  "content": "string (required) - Skill content/instructions",
+  "global": "boolean (optional) - Create globally (default: project-local)"
+}
+```
+
+---
+
+## MCP Server Management Tools
+
+### `opencode_mcp_list`
+
+List all configured MCP servers.
+
+**Input Schema**: `{}`
+
+---
+
+### `opencode_mcp_add`
+
+Add a new MCP server.
+
+**Input Schema**:
+```json
+{
+  "name": "string (required) - Unique server name",
+  "type": "string (required) - 'local' or 'remote'",
+  "command": "string[] (optional) - Command for local servers",
+  "environment": "object (optional) - Environment variables",
+  "url": "string (optional) - URL for remote servers",
+  "headers": "object (optional) - Headers for remote servers",
+  "enabled": "boolean (optional) - Enable on startup",
+  "timeout": "number (optional) - Connection timeout in ms"
+}
+```
+
+---
+
+### `opencode_mcp_remove`
+
+Remove an MCP server.
+
+**Input Schema**:
+```json
+{
+  "name": "string (required) - Server name to remove"
+}
+```
+
+---
+
+### `opencode_mcp_enable`
+
+Enable or disable an MCP server.
+
+**Input Schema**:
+```json
+{
+  "name": "string (required) - Server name",
+  "enabled": "boolean (required) - Enable or disable"
+}
+```
+
+---
+
+## Tool Configuration Tools
+
+### `opencode_tool_list`
+
+List all available tools.
+
+**Input Schema**:
+```json
+{
+  "provider": "string (optional) - Filter by provider",
+  "model": "string (optional) - Filter by model"
+}
+```
+
+---
+
+### `opencode_tool_configure`
+
+Enable or disable tools.
+
+**Input Schema**:
+```json
+{
+  "tools": "object (required) - Tool name patterns and enabled state",
+  "agent": "string (optional) - Apply to specific agent"
+}
+```
+
+**Example**:
+```json
+{
+  "tools": {
+    "mymcp_*": false,
+    "read": true,
+    "bash": false
+  }
+}
+```
+
+---
+
+### `opencode_permission_set`
+
+Set permission level for a tool.
+
+**Input Schema**:
+```json
+{
+  "tool": "string (required) - Tool name or pattern",
+  "permission": "string (required) - 'allow', 'ask', or 'deny'",
+  "agent": "string (optional) - Apply to specific agent"
+}
+```
+
+**Permission Levels**:
+- `allow`: Tool runs without user approval
+- `ask`: User is prompted for approval before tool runs
+- `deny`: Tool is disabled and cannot be used
