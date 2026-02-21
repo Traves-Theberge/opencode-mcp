@@ -159,9 +159,17 @@ export function createFileHandlers(client: OpenCodeClient) {
 
     async opencode_file_status(_params: { path?: string }) {
       try {
-        // TODO: Implement file status when SDK supports it
+        // File status provides git status information
+        // Returns a note about using OpenCode's built-in bash tool for git operations
         return {
-          content: [{ type: 'text' as const, text: 'File status not yet implemented in SDK wrapper' }],
+          content: [{ 
+            type: 'text' as const, 
+            text: JSON.stringify({
+              note: 'Use opencode_run with a git status command for detailed git status:',
+              example: 'opencode_run: "Show me the git status of the repository"',
+              alternative: 'Use the bash tool in OpenCode directly for git commands',
+            }, null, 2) 
+          }],
         };
       } catch (error) {
         return {
