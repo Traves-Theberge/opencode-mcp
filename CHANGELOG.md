@@ -23,29 +23,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smoke tests for server, tools, and connection (18 tests passing)
 
 ### Changed
-- Nothing yet
-
-### Deprecated
-- Nothing yet
-
-### Removed
-- Nothing yet
+- Updated to use MCP SDK v1.26.0 API with Zod schemas
+- Client wrapper now uses OpenCode SDK types directly
 
 ### Fixed
 - Correct import paths in tool files
+- Tool registration to use McpServer.tool() with Zod schemas
 
 ## [0.1.0] - TBD
 
 ### Added
 - MCP server with stdio transport
-- OpenCode SDK client wrapper
-- P0 Execution tools (`opencode_run`, session tools)
-- P0 File tools (read, search, find)
-- P1 Config and Model tools
-- P1 Agent tools (list, delegate)
-- Smoke tests for critical paths
-- Unit and integration tests
-- Documentation (README, API reference, setup guides)
+- OpenCode SDK client wrapper with connection management
+- P0 Execution tools:
+  - `opencode_run` - Execute coding tasks through OpenCode
+  - `opencode_session_create` - Create new sessions
+  - `opencode_session_prompt` - Send prompts to sessions
+  - `opencode_session_list` - List all sessions
+  - `opencode_session_abort` - Abort running sessions
+  - `opencode_session_share` - Share sessions
+- P0 File tools:
+  - `opencode_file_read` - Read project files
+  - `opencode_file_search` - Search text in files
+  - `opencode_find_files` - Find files by pattern
+  - `opencode_find_symbols` - Find workspace symbols
+  - `opencode_file_status` - Get git status
+- P1 Config tools:
+  - `opencode_model_list` - List available models
+  - `opencode_provider_list` - List providers
+  - `opencode_config_get` - Get configuration
+- P1 Agent tools:
+  - `opencode_agent_list` - List available agents
+  - `opencode_agent_delegate` - Delegate tasks to agents
+- Smoke tests for critical paths (18 tests)
+- Documentation (README)
 
 [Unreleased]: https://github.com/opencode-mcp/server/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/opencode-mcp/server/releases/tag/v0.1.0
