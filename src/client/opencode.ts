@@ -58,7 +58,7 @@ const PromptResponseSchema = z.object({
 export interface OpenCodeClient {
   isHealthy(): Promise<boolean>;
   listSessions(): Promise<unknown[]>;
-  createSession(title?: string, model?: { providerID: string; modelID: string }): Promise<{ id: string; title?: string }>;
+  createSession(title?: string, model?: { providerID: string; modelID: string }, directory?: string): Promise<{ id: string; title?: string }>;
   getSession(id: string): Promise<unknown>;
   abortSession(id: string): Promise<boolean>;
   shareSession(id: string): Promise<{ id: string; shareToken?: string }>;
@@ -167,11 +167,15 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
 
   async function createSession(
     title?: string, 
-    _model?: { providerID: string; modelID: string }
+    _model?: { providerID: string; modelID: string },
+    directory?: string
   ): Promise<{ id: string; title?: string }> {
     await ensureConnected();
     const result = await withTimeout(
-      () => client.session.create({ body: { title } }),
+      () => client.session.create({ 
+        body: { title },
+        query: directory ? { directory } : undefined,
+      }),
       'Create session'
     );
     const session = validateWithSchema(result.data, SessionSchema, 'createSession');

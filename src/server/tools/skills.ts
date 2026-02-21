@@ -5,6 +5,8 @@
  */
 
 import { z } from 'zod';
+import { readdir, readFile } from 'fs/promises';
+import { join } from 'path';
 import type { OpenCodeClient } from '../../client/opencode.js';
 import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 
@@ -67,47 +69,84 @@ export function getSkillToolDefinitions(): Array<{ name: string; description: st
 }
 
 // ============================================================================
-// Skill Types
-// ============================================================================
-
-interface Skill {
-  name: string;
-  description: string;
-  location: 'project' | 'global';
-}
-
-// ============================================================================
 // Tool Handlers
 // ============================================================================
 
-export function createSkillHandlers(client: OpenCodeClient) {
+/**
+ * Get skills from a directory on the filesystem
+ */
+async function getSkillsFromDirectory(basePath: string, location: 'project' | 'global'): Promise<Array<{ name: string; description: string; location: 'project' | 'global' }>> {
+  const skills: Array<{ name: string; description: string; location: 'project' | 'global' }> = [];
+  
+  try {
+    const entries = await readdir(basePath, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const skillPath = join(basePath, entry.name, 'SKILL.md');
+        try {
+          const content = await readFile(skillPath, 'utf-8');
+          // Extract description from frontmatter or first line
+          let description = '';
+          const descMatch = content.match(/description:\s*(.+)/);
+          if (descMatch?.[1]) {
+            description = descMatch[1].trim();
+          }
+          skills.push({ name: entry.name, description, location });
+        } catch {
+          // SKILL.md doesn't exist, skip
+        }
+      }
+    }
+  } catch {
+    // Directory doesn't exist, skip
+  }
+  
+  return skills;
+}
+
+export function createSkillHandlers(_client: OpenCodeClient) {
   return {
     async opencode_skill_list() {
       try {
-        // Skills are stored in SKILL.md files in various locations
-        // We'll search for them using the file search
-        const projectSkills: string[] = await client.findFiles('.opencode/skills/*/SKILL.md', 'file') ?? [];
-        const globalSkills: string[] = await client.findFiles('.claude/skills/*/SKILL.md', 'file') ?? [];
+        const skills: Array<{ name: string; description: string; location: 'project' | 'global' }> = [];
         
-        // Parse skill names from paths
-        const skills: Skill[] = [];
+        // Get home directory
+        const homeDir = process.env.HOME ?? process.env.USERPROFILE ?? '~';
         
-        for (const path of projectSkills) {
-          const match = path?.match(/\.opencode\/skills\/([^/]+)\/SKILL\.md$/);
-          if (match?.[1]) {
-            skills.push({ name: match[1], description: '', location: 'project' });
-          }
+        // Search global skill locations
+        const globalLocations = [
+          join(homeDir, '.config', 'opencode', 'skills'),
+          join(homeDir, '.claude', 'skills'),
+          join(homeDir, '.opencode', 'skills'),
+        ];
+        
+        for (const location of globalLocations) {
+          const found = await getSkillsFromDirectory(location, 'global');
+          skills.push(...found);
         }
         
-        for (const path of globalSkills) {
-          const match = path?.match(/\.claude\/skills\/([^/]+)\/SKILL\.md$/);
-          if (match?.[1]) {
-            skills.push({ name: match[1], description: '', location: 'global' });
-          }
+        // Also search project-local skills (relative to current working directory)
+        const cwd = process.cwd();
+        const projectLocations = [
+          join(cwd, '.opencode', 'skills'),
+          join(cwd, '.claude', 'skills'),
+        ];
+        
+        for (const location of projectLocations) {
+          const found = await getSkillsFromDirectory(location, 'project');
+          skills.push(...found);
         }
+        
+        // Deduplicate by name (prefer project over global)
+        const seen = new Set<string>();
+        const deduped = skills.filter(skill => {
+          if (seen.has(skill.name)) return false;
+          seen.add(skill.name);
+          return true;
+        });
         
         return {
-          content: [{ type: 'text' as const, text: JSON.stringify(skills, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(deduped, null, 2) }],
         };
       } catch (error) {
         return createErrorResponse(
@@ -120,18 +159,24 @@ export function createSkillHandlers(client: OpenCodeClient) {
 
     async opencode_skill_load(params: { name: string }) {
       try {
+        // Get home directory
+        const homeDir = process.env.HOME ?? process.env.USERPROFILE ?? '~';
+        const cwd = process.cwd();
+        
         // Try to read the skill file from various locations
         const paths = [
-          `.opencode/skills/${params.name}/SKILL.md`,
-          `.claude/skills/${params.name}/SKILL.md`,
-          `.agents/skills/${params.name}/SKILL.md`,
+          join(cwd, '.opencode', 'skills', params.name, 'SKILL.md'),
+          join(cwd, '.claude', 'skills', params.name, 'SKILL.md'),
+          join(homeDir, '.config', 'opencode', 'skills', params.name, 'SKILL.md'),
+          join(homeDir, '.claude', 'skills', params.name, 'SKILL.md'),
+          join(homeDir, '.opencode', 'skills', params.name, 'SKILL.md'),
         ];
         
-        for (const path of paths) {
+        for (const skillPath of paths) {
           try {
-            const result = await client.readFile(path);
+            const content = await readFile(skillPath, 'utf-8');
             return {
-              content: [{ type: 'text' as const, text: result.content }],
+              content: [{ type: 'text' as const, text: content }],
             };
           } catch {
             // Try next path

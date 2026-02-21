@@ -69,7 +69,14 @@ export function getExecutionToolDefinitions(): Array<{ name: string; description
     {
       name: 'opencode_session_create',
       description: 'Create a new OpenCode session for multi-turn conversations. Returns a session ID that can be used for subsequent prompts.',
-      inputSchema: { type: 'object', properties: {} },
+      inputSchema: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Session title' },
+          model: { type: 'string', description: 'Model in format provider/model' },
+          workingDirectory: { type: 'string', description: 'Project directory path' },
+        },
+      },
     },
     {
       name: 'opencode_session_prompt',
@@ -117,12 +124,13 @@ export function getExecutionToolDefinitions(): Array<{ name: string; description
 
 export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: string) {
   return {
-    async opencode_run(params: { prompt: string; model?: string; agent?: string; files?: string[]; noReply?: boolean }) {
+    async opencode_run(params: { prompt: string; model?: string; agent?: string; workingDirectory?: string; files?: string[]; noReply?: boolean }) {
       try {
-        // Create a session for this run
+        // Create a session for this run, passing working directory if provided
         const session = await client.createSession(
           undefined,
-          resolveModel(params.model, defaultModel)
+          resolveModel(params.model, defaultModel),
+          params.workingDirectory
         );
 
         // Send the prompt
@@ -138,6 +146,7 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
             sessionId: result.sessionId,
             messageId: result.messageId,
             content: result.content,
+            workingDirectory: params.workingDirectory,
           }, null, 2) }],
         };
       } catch (error) {
@@ -149,17 +158,19 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
       }
     },
 
-    async opencode_session_create(params: { title?: string; model?: string }) {
+    async opencode_session_create(params: { title?: string; model?: string; workingDirectory?: string }) {
       try {
         const session = await client.createSession(
           params.title,
-          resolveModel(params.model, defaultModel)
+          resolveModel(params.model, defaultModel),
+          params.workingDirectory
         );
 
         return {
           content: [{ type: 'text' as const, text: JSON.stringify({
             sessionId: session.id,
             title: session.title,
+            workingDirectory: params.workingDirectory,
           }, null, 2) }],
         };
       } catch (error) {
