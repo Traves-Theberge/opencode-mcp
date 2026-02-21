@@ -5,36 +5,34 @@
  */
 
 import { z } from 'zod';
-import type { ToolDefinition, ToolResult } from '../../utils/types.js';
 import type { OpenCodeClient } from '../../client/opencode.js';
 import { resolveModel } from '../../client/opencode.js';
 
 // ============================================================================
-// Input Schemas
+// Input Schemas (exported for MCP SDK)
 // ============================================================================
 
-const AgentListInputSchema = z.object({});
-
-const AgentDelegateInputSchema = z.object({
-  agent: z.string().min(1).describe('Agent name to invoke (e.g., build, plan, explore, or custom agent)'),
-  prompt: z.string().min(1).describe('Task for the agent'),
-  sessionId: z.string().optional().describe('Session ID (creates new if not provided)'),
-  model: z.string().optional().describe('Model in format provider/model'),
-});
+export const INPUT_SCHEMAS = {
+  AgentListInputSchema: {},
+  
+  AgentDelegateInputSchema: {
+    agent: z.string().min(1).describe('Agent name to invoke (e.g., build, plan, explore, or custom agent)'),
+    prompt: z.string().min(1).describe('Task for the agent'),
+    sessionId: z.string().optional().describe('Session ID (creates new if not provided)'),
+    model: z.string().optional().describe('Model in format provider/model'),
+  },
+};
 
 // ============================================================================
-// Tool Definitions
+// Tool Definitions (for documentation/tests)
 // ============================================================================
 
-export function getAgentToolDefinitions(): ToolDefinition[] {
+export function getAgentToolDefinitions(): Array<{ name: string; description: string; inputSchema: Record<string, unknown> }> {
   return [
     {
       name: 'opencode_agent_list',
       description: 'List all available agents (primary and subagents). Primary agents are used for main conversations, subagents are specialized assistants that can be invoked for specific tasks.',
-      inputSchema: {
-        type: 'object',
-        properties: {},
-      },
+      inputSchema: { type: 'object', properties: {} },
     },
     {
       name: 'opencode_agent_delegate',
@@ -42,10 +40,10 @@ export function getAgentToolDefinitions(): ToolDefinition[] {
       inputSchema: {
         type: 'object',
         properties: {
-          agent: { type: 'string', description: 'Agent name to invoke (e.g., build, plan, explore, or custom agent)' },
-          prompt: { type: 'string', description: 'Task for the agent' },
-          sessionId: { type: 'string', description: 'Session ID (creates new if not provided)' },
-          model: { type: 'string', description: 'Model in format provider/model' },
+          agent: { type: 'string' },
+          prompt: { type: 'string' },
+          sessionId: { type: 'string' },
+          model: { type: 'string' },
         },
         required: ['agent', 'prompt'],
       },
@@ -54,26 +52,41 @@ export function getAgentToolDefinitions(): ToolDefinition[] {
 }
 
 // ============================================================================
+// Types for API responses
+// ============================================================================
+
+interface AgentData {
+  name: string;
+  description: string;
+  mode: 'primary' | 'subagent';
+  model?: string;
+  hidden?: boolean;
+}
+
+// ============================================================================
 // Tool Handlers
 // ============================================================================
 
 export function createAgentHandlers(client: OpenCodeClient, defaultModel?: string) {
   return {
-    async opencode_agent_list(): Promise<ToolResult> {
+    async opencode_agent_list() {
       try {
         const agents = await client.listAgents();
         
+        // Type assert agents
+        const typedAgents = agents as AgentData[];
+        
         // Separate primary and subagents
-        const primary = agents.filter(a => a.mode === 'primary' && !a.hidden);
-        const subagents = agents.filter(a => a.mode === 'subagent' && !a.hidden);
+        const primary = typedAgents.filter((a: AgentData) => a.mode === 'primary' && !a.hidden);
+        const subagents = typedAgents.filter((a: AgentData) => a.mode === 'subagent' && !a.hidden);
         
         const output = {
-          primary: primary.map(a => ({
+          primary: primary.map((a: AgentData) => ({
             name: a.name,
             description: a.description,
             model: a.model,
           })),
-          subagents: subagents.map(a => ({
+          subagents: subagents.map((a: AgentData) => ({
             name: a.name,
             description: a.description,
             model: a.model,
@@ -81,56 +94,47 @@ export function createAgentHandlers(client: OpenCodeClient, defaultModel?: strin
         };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
         };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Error listing agents: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [{ type: 'text' as const, text: `Error listing agents: ${error instanceof Error ? error.message : String(error)}` }],
           isError: true,
         };
       }
     },
 
-    async opencode_agent_delegate(input: unknown): Promise<ToolResult> {
-      const parsed = AgentDelegateInputSchema.safeParse(input);
-      if (!parsed.success) {
-        return {
-          content: [{ type: 'text', text: `Invalid input: ${parsed.error.message}` }],
-          isError: true,
-        };
-      }
-
+    async opencode_agent_delegate(params: { agent: string; prompt: string; sessionId?: string; model?: string }) {
       try {
         // Create or use existing session
-        let sessionId = parsed.data.sessionId;
+        let sessionId = params.sessionId;
         if (!sessionId) {
           const session = await client.createSession(
             undefined,
-            resolveModel(parsed.data.model, defaultModel)
+            resolveModel(params.model, defaultModel)
           );
           sessionId = session.id;
         }
 
         // Send the prompt with the specified agent
-        const result = await client.prompt(sessionId, parsed.data.prompt, {
-          agent: parsed.data.agent,
-          model: resolveModel(parsed.data.model, defaultModel),
+        const result = await client.prompt(sessionId, params.prompt, {
+          agent: params.agent,
+          model: resolveModel(params.model, defaultModel),
         });
 
         const output = {
-          agent: parsed.data.agent,
+          agent: params.agent,
           sessionId: result.sessionId,
           messageId: result.messageId,
           content: result.content,
-          structuredOutput: result.structuredOutput,
         };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
         };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Error delegating to agent: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [{ type: 'text' as const, text: `Error delegating to agent: ${error instanceof Error ? error.message : String(error)}` }],
           isError: true,
         };
       }

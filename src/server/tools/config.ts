@@ -5,27 +5,26 @@
  */
 
 import { z } from 'zod';
-import type { ToolDefinition, ToolResult } from '../../utils/types.js';
 import type { OpenCodeClient } from '../../client/opencode.js';
 
 // ============================================================================
-// Input Schemas
+// Input Schemas (exported for MCP SDK)
 // ============================================================================
 
-const ModelListInputSchema = z.object({
-  provider: z.string().optional().describe('Filter by provider ID'),
-  refresh: z.boolean().optional().describe('Refresh cache from models.dev'),
-});
-
-const ProviderListInputSchema = z.object({});
-
-const ConfigGetInputSchema = z.object({});
+export const INPUT_SCHEMAS = {
+  ModelListInputSchema: {
+    provider: z.string().optional().describe('Filter by provider ID'),
+    refresh: z.boolean().optional().describe('Refresh cache from models.dev'),
+  },
+  
+  EmptySchema: {},
+};
 
 // ============================================================================
-// Tool Definitions
+// Tool Definitions (for documentation/tests)
 // ============================================================================
 
-export function getConfigToolDefinitions(): ToolDefinition[] {
+export function getConfigToolDefinitions(): Array<{ name: string; description: string; inputSchema: Record<string, unknown> }> {
   return [
     {
       name: 'opencode_model_list',
@@ -33,28 +32,32 @@ export function getConfigToolDefinitions(): ToolDefinition[] {
       inputSchema: {
         type: 'object',
         properties: {
-          provider: { type: 'string', description: 'Filter by provider ID' },
-          refresh: { type: 'boolean', description: 'Refresh cache from models.dev' },
+          provider: { type: 'string' },
+          refresh: { type: 'boolean' },
         },
       },
     },
     {
       name: 'opencode_provider_list',
       description: 'List all providers and their connection status.',
-      inputSchema: {
-        type: 'object',
-        properties: {},
-      },
+      inputSchema: { type: 'object', properties: {} },
     },
     {
       name: 'opencode_config_get',
       description: 'Get current OpenCode configuration.',
-      inputSchema: {
-        type: 'object',
-        properties: {},
-      },
+      inputSchema: { type: 'object', properties: {} },
     },
   ];
+}
+
+// ============================================================================
+// Types for API responses
+// ============================================================================
+
+interface ProviderData {
+  id: string;
+  name: string;
+  models: Array<{ id: string; name: string }>;
 }
 
 // ============================================================================
@@ -63,29 +66,24 @@ export function getConfigToolDefinitions(): ToolDefinition[] {
 
 export function createConfigHandlers(client: OpenCodeClient) {
   return {
-    async opencode_model_list(input: unknown): Promise<ToolResult> {
-      const parsed = ModelListInputSchema.safeParse(input);
-      if (!parsed.success) {
-        return {
-          content: [{ type: 'text', text: `Invalid input: ${parsed.error.message}` }],
-          isError: true,
-        };
-      }
-
+    async opencode_model_list(params: { provider?: string; refresh?: boolean }) {
       try {
         const { providers, defaults } = await client.listProviders();
         
+        // Type assert providers
+        const typedProviders = providers as ProviderData[];
+        
         // Filter by provider if specified
-        let filteredProviders = providers;
-        if (parsed.data.provider) {
-          filteredProviders = providers.filter(p => p.id === parsed.data.provider);
+        let filteredProviders = typedProviders;
+        if (params.provider) {
+          filteredProviders = typedProviders.filter((p: ProviderData) => p.id === params.provider);
         }
 
         // Format output
-        const output = filteredProviders.map(provider => ({
+        const output = filteredProviders.map((provider: ProviderData) => ({
           provider: provider.id,
           name: provider.name,
-          models: provider.models.map(m => ({
+          models: provider.models.map((m: { id: string; name: string }) => ({
             id: m.id,
             name: m.name,
             default: defaults[provider.id] === m.id,
@@ -93,21 +91,24 @@ export function createConfigHandlers(client: OpenCodeClient) {
         }));
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
         };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Error listing models: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [{ type: 'text' as const, text: `Error listing models: ${error instanceof Error ? error.message : String(error)}` }],
           isError: true,
         };
       }
     },
 
-    async opencode_provider_list(): Promise<ToolResult> {
+    async opencode_provider_list() {
       try {
         const { providers, defaults } = await client.listProviders();
         
-        const output = providers.map(provider => ({
+        // Type assert providers
+        const typedProviders = providers as ProviderData[];
+        
+        const output = typedProviders.map((provider: ProviderData) => ({
           id: provider.id,
           name: provider.name,
           modelCount: provider.models.length,
@@ -115,19 +116,18 @@ export function createConfigHandlers(client: OpenCodeClient) {
         }));
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
         };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Error listing providers: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [{ type: 'text' as const, text: `Error listing providers: ${error instanceof Error ? error.message : String(error)}` }],
           isError: true,
         };
       }
     },
 
-    async opencode_config_get(): Promise<ToolResult> {
+    async opencode_config_get() {
       try {
-        // Return the current configuration from environment
         const config = {
           serverUrl: process.env.OPENCODE_SERVER_URL || 'http://localhost:4096',
           autoStart: process.env.OPENCODE_AUTO_START !== 'false',
@@ -137,11 +137,11 @@ export function createConfigHandlers(client: OpenCodeClient) {
         };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(config, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(config, null, 2) }],
         };
       } catch (error) {
         return {
-          content: [{ type: 'text', text: `Error getting config: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [{ type: 'text' as const, text: `Error getting config: ${error instanceof Error ? error.message : String(error)}` }],
           isError: true,
         };
       }

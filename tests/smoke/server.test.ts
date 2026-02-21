@@ -20,7 +20,8 @@ describe('Smoke Tests - Server', () => {
       const server = await createMCPServer();
       expect(server).toBeDefined();
       expect(server.connect).toBeDefined();
-      expect(server.registerTool).toBeDefined();
+      expect(server.isConnected).toBeDefined();
+      expect(server.close).toBeDefined();
     });
 
     test('server can be created with custom config', async () => {

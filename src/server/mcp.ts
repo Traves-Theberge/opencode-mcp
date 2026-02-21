@@ -7,15 +7,12 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import type { ServerConfig, ToolResult } from '../utils/types.js';
-import { DEFAULT_CONFIG } from '../utils/types.js';
 import { loadConfig } from '../utils/config.js';
 import { createClient } from '../client/opencode.js';
-import { getAllToolDefinitions, createAllHandlers, getToolHandlerMap } from './tools/index.js';
+import { registerAllTools } from './tools/index.js';
 
 export interface MCPServerInstance {
   connect: () => Promise<void>;
-  registerTool: (name: string, description: string, schema: unknown, handler: unknown) => void;
   isConnected: () => boolean;
   close: () => Promise<void>;
 }
@@ -43,24 +40,9 @@ export async function createMCPServer(options?: CreateServerOptions): Promise<MC
 
   // Create OpenCode client
   const client = await createClient(config);
-  const handlers = createAllHandlers(client, config.defaultModel);
-  const handlerMap = getToolHandlerMap(handlers);
 
   // Register all tools
-  const toolDefinitions = getAllToolDefinitions();
-  for (const tool of toolDefinitions) {
-    const handler = handlerMap[tool.name];
-    if (handler) {
-      server.tool(
-        tool.name,
-        tool.description,
-        tool.inputSchema,
-        async (params: unknown) => {
-          return handler(params) as Promise<ToolResult>;
-        }
-      );
-    }
-  }
+  registerAllTools(server, client, config.defaultModel);
 
   return {
     async connect() {
@@ -69,10 +51,6 @@ export async function createMCPServer(options?: CreateServerOptions): Promise<MC
       const transport = new StdioServerTransport();
       await server.connect(transport);
       connected = true;
-    },
-
-    registerTool(name: string, description: string, schema: unknown, handler: unknown) {
-      server.tool(name, description, schema as Record<string, unknown>, handler as () => Promise<ToolResult>);
     },
 
     isConnected() {
@@ -98,4 +76,4 @@ export async function startServer(): Promise<void> {
 }
 
 // Export for programmatic use
-export { loadConfig, getAllToolDefinitions, createAllHandlers, getToolHandlerMap };
+export { loadConfig };

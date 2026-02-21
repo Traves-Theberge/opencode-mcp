@@ -6,38 +6,32 @@
  */
 
 import { createOpencodeClient } from '@opencode-ai/sdk';
-import type {
-  ServerConfig,
-  Session,
-  Agent,
-  Provider,
-  FileContent,
-  SearchResult,
-  Symbol,
-  OpenCodeRunOutput,
-  ModelRef,
-} from '../utils/types.js';
-import { OpenCodeMCPError, ErrorCodes, parseModelString } from '../utils/types.js';
+import type { ServerConfig } from '../utils/types.js';
+import { OpenCodeMCPError, ErrorCodes } from '../utils/types.js';
+import { parseModelString } from '../utils/config.js';
+
+// Re-export types from SDK for convenience
+export type { Session, Agent, Provider } from '@opencode-ai/sdk';
 
 export interface OpenCodeClient {
   isHealthy(): Promise<boolean>;
-  listSessions(): Promise<Session[]>;
-  createSession(title?: string, model?: ModelRef): Promise<Session>;
-  getSession(id: string): Promise<Session>;
+  listSessions(): Promise<unknown[]>;
+  createSession(title?: string, model?: { providerID: string; modelID: string }): Promise<{ id: string; title?: string }>;
+  getSession(id: string): Promise<unknown>;
   abortSession(id: string): Promise<boolean>;
-  shareSession(id: string): Promise<Session>;
-  prompt(sessionId: string, prompt: string, options?: PromptOptions): Promise<OpenCodeRunOutput>;
-  listAgents(): Promise<Agent[]>;
-  listProviders(): Promise<{ providers: Provider[]; defaults: Record<string, string> }>;
-  readFile(path: string): Promise<FileContent>;
-  searchText(pattern: string, directory?: string): Promise<SearchResult[]>;
+  shareSession(id: string): Promise<{ id: string; shareToken?: string }>;
+  prompt(sessionId: string, promptText: string, options?: PromptOptions): Promise<{ sessionId: string; messageId: string; content: string }>;
+  listAgents(): Promise<unknown[]>;
+  listProviders(): Promise<{ providers: unknown[]; defaults: Record<string, string> }>;
+  readFile(path: string): Promise<{ content: string }>;
+  searchText(pattern: string, directory?: string): Promise<unknown[]>;
   findFiles(query: string, type?: 'file' | 'directory', limit?: number): Promise<string[]>;
-  findSymbols(query: string): Promise<Symbol[]>;
+  findSymbols(query: string): Promise<unknown[]>;
   disconnect(): void;
 }
 
 export interface PromptOptions {
-  model?: ModelRef;
+  model?: { providerID: string; modelID: string };
   agent?: string;
   files?: string[];
   noReply?: boolean;
@@ -66,34 +60,36 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
 
   async function isHealthy(): Promise<boolean> {
     try {
-      const result = await client.global.health();
-      return result.data?.healthy === true;
+      // Try a simple API call to check health
+      await client.session.list();
+      return true;
     } catch {
       return false;
     }
   }
 
-  async function listSessions(): Promise<Session[]> {
+  async function listSessions(): Promise<unknown[]> {
     await ensureConnected();
     const result = await client.session.list();
-    return result.data as Session[];
+    return result.data ?? [];
   }
 
-  async function createSession(title?: string, model?: ModelRef): Promise<Session> {
+  async function createSession(
+    title?: string, 
+    _model?: { providerID: string; modelID: string }
+  ): Promise<{ id: string; title?: string }> {
     await ensureConnected();
     const result = await client.session.create({
-      body: {
-        title,
-        model,
-      },
+      body: { title },
     });
-    return result.data as Session;
+    const session = result.data;
+    return { id: session?.id ?? '', title: session?.title };
   }
 
-  async function getSession(id: string): Promise<Session> {
+  async function getSession(id: string): Promise<unknown> {
     await ensureConnected();
     const result = await client.session.get({ path: { id } });
-    return result.data as Session;
+    return result.data;
   }
 
   async function abortSession(id: string): Promise<boolean> {
@@ -102,97 +98,77 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     return result.data === true;
   }
 
-  async function shareSession(id: string): Promise<Session> {
+  async function shareSession(id: string): Promise<{ id: string; shareToken?: string }> {
     await ensureConnected();
     const result = await client.session.share({ path: { id } });
-    return result.data as Session;
+    const data = result.data;
+    return { id: data?.id ?? '', shareToken: (data as { shareToken?: string })?.shareToken };
   }
 
   async function prompt(
     sessionId: string,
     promptText: string,
     options?: PromptOptions
-  ): Promise<OpenCodeRunOutput> {
+  ): Promise<{ sessionId: string; messageId: string; content: string }> {
     await ensureConnected();
     
-    const body: Record<string, unknown> = {
-      parts: [{ type: 'text', text: promptText }],
-    };
-
-    if (options?.model) {
-      body.model = options.model;
-    }
-
-    if (options?.agent) {
-      body.agent = options.agent;
-    }
-
-    if (options?.files && options.files.length > 0) {
-      body.files = options.files;
-    }
-
-    if (options?.noReply) {
-      body.noReply = true;
-    }
-
-    if (options?.structuredOutput) {
-      body.format = {
-        type: 'json_schema',
-        schema: options.structuredOutput.schema,
-      };
-    }
-
     const result = await client.session.prompt({
       path: { id: sessionId },
-      body,
+      body: {
+        parts: [{ type: 'text', text: promptText }],
+        ...(options?.model && { model: options.model }),
+        ...(options?.agent && { agent: options.agent }),
+        ...(options?.noReply && { noReply: true }),
+      },
     });
 
     const response = result.data;
     
     // Extract content from parts
     let content = '';
-    let structuredOutput: unknown;
-    
-    if (response.parts) {
+    if (response?.parts) {
       for (const part of response.parts) {
-        if (part.type === 'text' && part.text) {
+        if (part.type === 'text' && 'text' in part) {
           content += part.text;
         }
       }
     }
 
-    // Check for structured output
-    if ('info' in response && response.info && 'structured_output' in response.info) {
-      structuredOutput = (response.info as { structured_output?: unknown }).structured_output;
-    }
-
     return {
       sessionId,
-      messageId: response.info?.id ?? '',
+      messageId: response?.info?.id ?? '',
       content,
-      structuredOutput,
     };
   }
 
-  async function listAgents(): Promise<Agent[]> {
+  async function listAgents(): Promise<unknown[]> {
     await ensureConnected();
     const result = await client.app.agents();
-    return result.data as Agent[];
+    return result.data ?? [];
   }
 
-  async function listProviders(): Promise<{ providers: Provider[]; defaults: Record<string, string> }> {
+  async function listProviders(): Promise<{ providers: unknown[]; defaults: Record<string, string> }> {
     await ensureConnected();
     const result = await client.config.providers();
-    return result.data as { providers: Provider[]; defaults: Record<string, string> };
+    const data = result.data;
+    return { 
+      providers: data?.providers ?? [], 
+      defaults: (data as { default?: Record<string, string> })?.default ?? {} 
+    };
   }
 
-  async function readFile(path: string): Promise<FileContent> {
+  async function readFile(path: string): Promise<{ content: string }> {
     await ensureConnected();
     const result = await client.file.read({ query: { path } });
-    return result.data as FileContent;
+    const data = result.data;
+    // Handle different content types
+    if (data && 'content' in data) {
+      return { content: String(data.content) };
+    }
+    return { content: '' };
   }
 
-  async function searchText(pattern: string, directory?: string): Promise<SearchResult[]> {
+  async function searchText(pattern: string, directory?: string): Promise<unknown[]> {
     await ensureConnected();
     const result = await client.find.text({
       query: {
@@ -200,7 +176,13 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
         ...(directory && { directory }),
       },
     });
-    return result.data as SearchResult[];
+    // Transform SDK result to simpler format
+    const data = result.data ?? [];
+    return data.map((item: { path?: { text?: string }; lines?: { text?: string }; line_number?: number }) => ({
+      path: item.path?.text ?? '',
+      lines: item.lines?.text ?? '',
+      line_number: item.line_number ?? 0,
+    }));
   }
 
   async function findFiles(
@@ -216,13 +198,13 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
         ...(limit && { limit }),
       },
     });
-    return result.data as string[];
+    return result.data ?? [];
   }
 
-  async function findSymbols(query: string): Promise<Symbol[]> {
+  async function findSymbols(query: string): Promise<unknown[]> {
     await ensureConnected();
     const result = await client.find.symbols({ query: { query } });
-    return result.data as Symbol[];
+    return result.data ?? [];
   }
 
   function disconnect(): void {
@@ -250,7 +232,10 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
 /**
  * Helper to parse model string and return ModelRef
  */
-export function resolveModel(modelStr: string | undefined, defaultModel?: string): ModelRef | undefined {
+export function resolveModel(
+  modelStr: string | undefined, 
+  defaultModel?: string
+): { providerID: string; modelID: string } | undefined {
   const toUse = modelStr ?? defaultModel;
   if (!toUse) return undefined;
   
