@@ -255,7 +255,7 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=3000 npx @opencode-mcp/server
 | `OPENCODE_LOG_TIMESTAMP` | `false` | Include timestamps in logs |
 | `MCP_TRANSPORT` | `stdio` | Transport mode (stdio or http) |
 | `MCP_HTTP_PORT` | `3000` | HTTP port |
-| `MCP_CORS_ORIGINS` | `*` | CORS origins (comma-separated) |
+| `MCP_CORS_ORIGINS` | `*` | CORS origins (comma-separated, restrict in production) |
 
 ## Error Handling
 
@@ -294,12 +294,25 @@ npm run lint
 npm run build
 ```
 
+## Security
+
+OpenCode MCP Server is designed with security in mind:
+
+- **stdio transport (default)**: Local-only access, requires system access
+- **No credential storage**: API keys managed by OpenCode, not MCP server
+- **Input validation**: All inputs validated with Zod schemas
+- **CORS configurable**: Restrict origins for HTTP transport
+- **Request limits**: Configurable body size limits and timeouts
+
+For production deployments with HTTP transport, see the [Security Guide](docs/guides/SECURITY.md).
+
 ## Documentation
 
 - [API Reference](docs/api/TOOLS.md) - Complete tool documentation with annotations
 - [IDE Setup Guide](docs/guides/IDE_SETUP.md) - Configure your IDE
 - [Logging Guide](docs/guides/LOGGING.md) - Configure logging levels
 - [Error Handling Guide](docs/guides/ERRORS.md) - Error format and categories
+- [Security Guide](docs/guides/SECURITY.md) - Security considerations and best practices
 - [Architecture](docs/ARCHITECTURE.md) - System design
 
 ## Contributing

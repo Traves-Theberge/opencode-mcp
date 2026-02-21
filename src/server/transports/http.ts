@@ -44,6 +44,10 @@ export interface HTTPTransportOptions {
   port: number;
   hostname: string;
   corsOrigins?: string[];
+  /** Maximum request body size (default: '1mb') */
+  maxBodySize?: string;
+  /** Request timeout in milliseconds (default: 30000) */
+  requestTimeout?: number;
   onReady?: () => void;
 }
 
@@ -54,6 +58,17 @@ export interface HTTPTransportOptions {
 const sessionTransports = new Map<string, StreamableHTTPServerTransport>();
 
 /**
+ * Security headers middleware
+ */
+function securityHeaders(_req: express.Request, res: express.Response, next: express.NextFunction): void {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.removeHeader('X-Powered-By');
+  next();
+}
+
+/**
  * Create an HTTP server with MCP Streamable HTTP transport
  */
 export async function createHTTPTransport(
@@ -62,13 +77,17 @@ export async function createHTTPTransport(
 ): Promise<express.Application> {
   const app = express();
   
+  // Security headers
+  app.use(securityHeaders);
+  
   // CORS configuration
   app.use(cors({
     origin: options.corsOrigins ?? ['*'],
     credentials: true,
   }));
   
-  app.use(express.json());
+  // Request body limits (configurable, default 1MB)
+  app.use(express.json({ limit: options.maxBodySize ?? '1mb' }));
 
   // Health check endpoint
   app.get('/health', (_req, res) => {
