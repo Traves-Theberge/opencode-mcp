@@ -17,6 +17,90 @@ Complete reference for all OpenCode MCP Server tools.
 
 ---
 
+## Tool Annotations Reference
+
+All tools include MCP-compliant annotations for LLM discoverability:
+
+| Annotation | Description |
+|------------|-------------|
+| `readOnlyHint` | Tool only reads data, doesn't modify state |
+| `destructiveHint` | Tool may perform destructive updates |
+| `idempotentHint` | Multiple calls produce same result |
+| `openWorldHint` | Tool interacts with external entities |
+
+### Read-Only Tools (safe to call without side effects)
+
+| Tool | readOnly | idempotent | openWorld |
+|------|----------|------------|-----------|
+| `opencode_session_list` | ✓ | ✓ | ✓ |
+| `opencode_file_read` | ✓ | ✓ | ✓ |
+| `opencode_file_search` | ✓ | ✓ | ✓ |
+| `opencode_find_files` | ✓ | ✓ | ✓ |
+| `opencode_find_symbols` | ✓ | ✓ | ✓ |
+| `opencode_file_status` | ✓ | ✓ | ✓ |
+| `opencode_model_list` | ✓ | ✓ | ✓ |
+| `opencode_provider_list` | ✓ | ✓ | ✓ |
+| `opencode_config_get` | ✓ | ✓ | ✓ |
+| `opencode_agent_list` | ✓ | ✓ | ✓ |
+| `opencode_skill_list` | ✓ | ✓ | ✓ |
+| `opencode_skill_load` | ✓ | ✓ | ✓ |
+| `opencode_mcp_list` | ✓ | ✓ | ✓ |
+| `opencode_tool_list` | ✓ | ✓ | ✓ |
+
+### Write Tools (modify state)
+
+| Tool | destructive | openWorld | Notes |
+|------|-------------|-----------|-------|
+| `opencode_run` | ✓ | ✓ | Executes code changes |
+| `opencode_session_create` | ✗ | ✓ | Creates new resource |
+| `opencode_session_prompt` | ✓ | ✓ | May modify files |
+| `opencode_session_abort` | ✓ | ✓ | Stops running session |
+| `opencode_session_share` | ✗ | ✓ | Creates share link |
+| `opencode_model_configure` | ✓ | ✓ | Changes model settings |
+| `opencode_config_update` | ✓ | ✓ | Changes configuration |
+| `opencode_auth_set` | ✓ | ✓ | Sets credentials |
+| `opencode_agent_delegate` | ✓ | ✓ | May execute changes |
+| `opencode_skill_create` | ✗ | ✓ | Creates new skill |
+| `opencode_mcp_add` | ✗ | ✓ | Adds MCP server |
+| `opencode_mcp_remove` | ✓ | ✓ | Removes MCP server |
+| `opencode_mcp_enable` | ✓ | ✓ | Changes server state |
+| `opencode_tool_configure` | ✓ | ✓ | Changes tool settings |
+| `opencode_permission_set` | ✓ | ✓ | Changes permissions |
+
+---
+
+## Error Response Format
+
+All tools return errors in a consistent format:
+
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "Error: <operation> failed.\n\nDetails: <error message>\n\nSuggestions:\n  1. <actionable suggestion>\n  2. <another suggestion>"
+  }],
+  "isError": true
+}
+```
+
+This format helps LLMs understand what went wrong and how to fix it.
+
+### Error Categories
+
+| Category | When It Occurs | Example Suggestions |
+|----------|----------------|---------------------|
+| `connectionFailed` | Cannot reach OpenCode server | Start server, check URL |
+| `sessionNotFound` | Invalid session ID | List sessions, create new |
+| `fileNotFound` | File doesn't exist | Verify path, use find_files |
+| `skillNotFound` | Skill doesn't exist | List skills, check spelling |
+| `agentNotFound` | Agent doesn't exist | List agents, check spelling |
+| `unauthorized` | Invalid credentials | Check API keys, run auth login |
+| `timeout` | Operation took too long | Break into smaller tasks |
+| `invalidInput` | Validation failed | Check types, required fields |
+| `mcpError` | MCP server config issue | Check config, verify command |
+
+---
+
 ## Execution Tools
 
 ### `opencode_run`
@@ -24,6 +108,8 @@ Complete reference for all OpenCode MCP Server tools.
 Execute a coding task through OpenCode AI agent.
 
 **When to use**: Implementing features, refactoring, debugging, explaining code, or any software engineering task.
+
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -51,6 +137,8 @@ Execute a coding task through OpenCode AI agent.
 
 Create a new OpenCode session for multi-turn conversations.
 
+**Annotations**: `destructiveHint: false`, `openWorldHint: true`
+
 **Input Schema**:
 ```json
 {
@@ -68,6 +156,8 @@ Create a new OpenCode session for multi-turn conversations.
 
 Send a prompt to an existing session.
 
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
+
 **Input Schema**:
 ```json
 {
@@ -84,6 +174,8 @@ Send a prompt to an existing session.
 
 List all OpenCode sessions.
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**: `{}` (no parameters)
 
 ---
@@ -91,6 +183,8 @@ List all OpenCode sessions.
 ### `opencode_session_abort`
 
 Abort a running session.
+
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -104,6 +198,8 @@ Abort a running session.
 ### `opencode_session_share`
 
 Share a session. Returns a shareable link.
+
+**Annotations**: `destructiveHint: false`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -122,6 +218,8 @@ Share a session. Returns a shareable link.
 
 Read a file from the project.
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**:
 ```json
 {
@@ -134,6 +232,8 @@ Read a file from the project.
 ### `opencode_file_search`
 
 Search for text pattern in project files.
+
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -148,6 +248,8 @@ Search for text pattern in project files.
 ### `opencode_find_files`
 
 Find files and directories by name pattern.
+
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -164,6 +266,8 @@ Find files and directories by name pattern.
 
 Find workspace symbols (functions, classes, variables).
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**:
 ```json
 {
@@ -177,6 +281,8 @@ Find workspace symbols (functions, classes, variables).
 
 Get git status for tracked files.
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**: `{}` (no parameters)
 
 ---
@@ -186,6 +292,8 @@ Get git status for tracked files.
 ### `opencode_model_list`
 
 List all available models from configured providers.
+
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -200,6 +308,8 @@ List all available models from configured providers.
 ### `opencode_model_configure`
 
 Configure model options.
+
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -228,6 +338,8 @@ Configure model options.
 
 List all providers and their connection status.
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**: `{}`
 
 ---
@@ -236,6 +348,8 @@ List all providers and their connection status.
 
 Get current OpenCode configuration.
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**: `{}`
 
 ---
@@ -243,6 +357,8 @@ Get current OpenCode configuration.
 ### `opencode_config_update`
 
 Update OpenCode configuration settings.
+
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -260,6 +376,8 @@ Update OpenCode configuration settings.
 ### `opencode_auth_set`
 
 Set authentication credentials for a provider.
+
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -279,6 +397,8 @@ Set authentication credentials for a provider.
 
 List all available agents (primary and subagents).
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**: `{}`
 
 **Returns**:
@@ -294,6 +414,8 @@ List all available agents (primary and subagents).
 ### `opencode_agent_delegate`
 
 Delegate a task to a specific agent.
+
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -313,6 +435,8 @@ Delegate a task to a specific agent.
 
 List all available skills from SKILL.md files.
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**: `{}`
 
 ---
@@ -320,6 +444,8 @@ List all available skills from SKILL.md files.
 ### `opencode_skill_load`
 
 Load a skill and return its content.
+
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -333,6 +459,8 @@ Load a skill and return its content.
 ### `opencode_skill_create`
 
 Create a new skill (SKILL.md file).
+
+**Annotations**: `destructiveHint: false`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -352,6 +480,8 @@ Create a new skill (SKILL.md file).
 
 List all configured MCP servers.
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**: `{}`
 
 ---
@@ -359,6 +489,8 @@ List all configured MCP servers.
 ### `opencode_mcp_add`
 
 Add a new MCP server.
+
+**Annotations**: `destructiveHint: false`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -380,6 +512,8 @@ Add a new MCP server.
 
 Remove an MCP server.
 
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
+
 **Input Schema**:
 ```json
 {
@@ -392,6 +526,8 @@ Remove an MCP server.
 ### `opencode_mcp_enable`
 
 Enable or disable an MCP server.
+
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -409,6 +545,8 @@ Enable or disable an MCP server.
 
 List all available tools.
 
+**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
+
 **Input Schema**:
 ```json
 {
@@ -422,6 +560,8 @@ List all available tools.
 ### `opencode_tool_configure`
 
 Enable or disable tools.
+
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
@@ -447,6 +587,8 @@ Enable or disable tools.
 ### `opencode_permission_set`
 
 Set permission level for a tool.
+
+**Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json

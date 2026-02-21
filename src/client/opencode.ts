@@ -2,16 +2,58 @@
  * OpenCode SDK Client Wrapper
  * 
  * Provides a type-safe interface to the OpenCode server with
- * connection management, error handling, and retry logic.
+ * connection management, error handling, retry logic, and Zod validation.
  */
 
 import { createOpencodeClient } from '@opencode-ai/sdk';
+import { z } from 'zod';
 import type { ServerConfig } from '../utils/types.js';
 import { OpenCodeMCPError, ErrorCodes } from '../utils/types.js';
 import { parseModelString } from '../utils/config.js';
 
 // Re-export types from SDK for convenience
 export type { Session, Agent, Provider } from '@opencode-ai/sdk';
+
+// ============================================================================
+// Zod Schemas for SDK Response Validation
+// ============================================================================
+
+const SessionSchema = z.object({
+  id: z.string(),
+  title: z.string().optional(),
+}).passthrough();
+
+const AgentSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  mode: z.enum(['primary', 'subagent']).optional(),
+  model: z.string().optional(),
+  hidden: z.boolean().optional(),
+}).passthrough();
+
+const ProviderSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  models: z.array(z.object({
+    id: z.string(),
+    name: z.string().optional(),
+  })).optional(),
+}).passthrough();
+
+const FileContentSchema = z.object({
+  content: z.union([z.string(), z.unknown()]),
+}).passthrough();
+
+const PromptResponseSchema = z.object({
+  parts: z.array(z.unknown()).optional(),
+  info: z.object({
+    id: z.string().optional(),
+  }).passthrough().optional(),
+}).passthrough();
+
+// ============================================================================
+// Client Interface
+// ============================================================================
 
 export interface OpenCodeClient {
   isHealthy(): Promise<boolean>;
@@ -38,12 +80,62 @@ export interface PromptOptions {
   structuredOutput?: { schema: Record<string, unknown> };
 }
 
+// ============================================================================
+// Validation Helpers
+// ============================================================================
+
+function validateWithSchema<T>(
+  data: unknown,
+  schema: z.ZodType<T>,
+  context: string
+): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.error(`Validation error in ${context}:`, result.error.issues);
+    // Return data as-is but log the validation issues
+    // This allows the system to continue even if SDK response format changes slightly
+    return data as T;
+  }
+  return result.data;
+}
+
+// ============================================================================
+// Client Factory
+// ============================================================================
+
 export async function createClient(config: ServerConfig): Promise<OpenCodeClient> {
   const client = createOpencodeClient({
     baseUrl: config.serverUrl,
   });
 
   let connected = false;
+  const timeout = config.timeout ?? 120000;
+
+  /**
+   * Execute an async operation with timeout
+   */
+  async function withTimeout<T>(
+    operation: () => Promise<T>,
+    operationName: string
+  ): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const result = await operation();
+      clearTimeout(timeoutId);
+      return result;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new OpenCodeMCPError(
+          `${operationName} timed out after ${timeout}ms`,
+          ErrorCodes.TIMEOUT
+        );
+      }
+      throw error;
+    }
+  }
 
   async function ensureConnected(): Promise<void> {
     if (!connected) {
@@ -60,8 +152,7 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
 
   async function isHealthy(): Promise<boolean> {
     try {
-      // Try a simple API call to check health
-      await client.session.list();
+      await withTimeout(() => client.session.list(), 'Health check');
       return true;
     } catch {
       return false;
@@ -70,7 +161,7 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
 
   async function listSessions(): Promise<unknown[]> {
     await ensureConnected();
-    const result = await client.session.list();
+    const result = await withTimeout(() => client.session.list(), 'List sessions');
     return result.data ?? [];
   }
 
@@ -79,30 +170,43 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     _model?: { providerID: string; modelID: string }
   ): Promise<{ id: string; title?: string }> {
     await ensureConnected();
-    const result = await client.session.create({
-      body: { title },
-    });
-    const session = result.data;
+    const result = await withTimeout(
+      () => client.session.create({ body: { title } }),
+      'Create session'
+    );
+    const session = validateWithSchema(result.data, SessionSchema, 'createSession');
     return { id: session?.id ?? '', title: session?.title };
   }
 
   async function getSession(id: string): Promise<unknown> {
     await ensureConnected();
-    const result = await client.session.get({ path: { id } });
+    const result = await withTimeout(
+      () => client.session.get({ path: { id } }),
+      'Get session'
+    );
     return result.data;
   }
 
   async function abortSession(id: string): Promise<boolean> {
     await ensureConnected();
-    const result = await client.session.abort({ path: { id } });
+    const result = await withTimeout(
+      () => client.session.abort({ path: { id } }),
+      'Abort session'
+    );
     return result.data === true;
   }
 
   async function shareSession(id: string): Promise<{ id: string; shareToken?: string }> {
     await ensureConnected();
-    const result = await client.session.share({ path: { id } });
+    const result = await withTimeout(
+      () => client.session.share({ path: { id } }),
+      'Share session'
+    );
     const data = result.data;
-    return { id: data?.id ?? '', shareToken: (data as { shareToken?: string })?.shareToken };
+    return { 
+      id: data?.id ?? '', 
+      shareToken: (data as { shareToken?: string })?.shareToken 
+    };
   }
 
   async function prompt(
@@ -112,24 +216,27 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
   ): Promise<{ sessionId: string; messageId: string; content: string }> {
     await ensureConnected();
     
-    const result = await client.session.prompt({
-      path: { id: sessionId },
-      body: {
-        parts: [{ type: 'text', text: promptText }],
-        ...(options?.model && { model: options.model }),
-        ...(options?.agent && { agent: options.agent }),
-        ...(options?.noReply && { noReply: true }),
-      },
-    });
+    const result = await withTimeout(
+      () => client.session.prompt({
+        path: { id: sessionId },
+        body: {
+          parts: [{ type: 'text', text: promptText }],
+          ...(options?.model && { model: options.model }),
+          ...(options?.agent && { agent: options.agent }),
+          ...(options?.noReply && { noReply: true }),
+        },
+      }),
+      'Send prompt'
+    );
 
-    const response = result.data;
+    const response = validateWithSchema(result.data, PromptResponseSchema, 'prompt');
     
     // Extract content from parts
     let content = '';
     if (response?.parts) {
       for (const part of response.parts) {
-        if (part.type === 'text' && 'text' in part) {
-          content += part.text;
+        if (part && typeof part === 'object' && 'type' in part && part.type === 'text' && 'text' in part) {
+          content += String(part.text);
         }
       }
     }
@@ -143,24 +250,38 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
 
   async function listAgents(): Promise<unknown[]> {
     await ensureConnected();
-    const result = await client.app.agents();
-    return result.data ?? [];
+    const result = await withTimeout(
+      () => client.app.agents(),
+      'List agents'
+    );
+    const agents = result.data ?? [];
+    // Validate each agent
+    return agents.map(agent => validateWithSchema(agent, AgentSchema, 'listAgents'));
   }
 
   async function listProviders(): Promise<{ providers: unknown[]; defaults: Record<string, string> }> {
     await ensureConnected();
-    const result = await client.config.providers();
+    const result = await withTimeout(
+      () => client.config.providers(),
+      'List providers'
+    );
     const data = result.data;
+    const providers = (data?.providers ?? []).map(
+      p => validateWithSchema(p, ProviderSchema, 'listProviders')
+    );
     return { 
-      providers: data?.providers ?? [], 
+      providers, 
       defaults: (data as { default?: Record<string, string> })?.default ?? {} 
     };
   }
 
   async function readFile(path: string): Promise<{ content: string }> {
     await ensureConnected();
-    const result = await client.file.read({ query: { path } });
-    const data = result.data;
+    const result = await withTimeout(
+      () => client.file.read({ query: { path } }),
+      'Read file'
+    );
+    const data = validateWithSchema(result.data, FileContentSchema, 'readFile');
     // Handle different content types
     if (data && 'content' in data) {
       return { content: String(data.content) };
@@ -170,12 +291,15 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
 
   async function searchText(pattern: string, directory?: string): Promise<unknown[]> {
     await ensureConnected();
-    const result = await client.find.text({
-      query: {
-        pattern,
-        ...(directory && { directory }),
-      },
-    });
+    const result = await withTimeout(
+      () => client.find.text({
+        query: {
+          pattern,
+          ...(directory && { directory }),
+        },
+      }),
+      'Search text'
+    );
     // Transform SDK result to simpler format
     const data = result.data ?? [];
     return data.map((item: { path?: { text?: string }; lines?: { text?: string }; line_number?: number }) => ({
@@ -191,19 +315,25 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     limit?: number
   ): Promise<string[]> {
     await ensureConnected();
-    const result = await client.find.files({
-      query: {
-        query,
-        ...(type && { type }),
-        ...(limit && { limit }),
-      },
-    });
+    const result = await withTimeout(
+      () => client.find.files({
+        query: {
+          query,
+          ...(type && { type }),
+          ...(limit && { limit }),
+        },
+      }),
+      'Find files'
+    );
     return result.data ?? [];
   }
 
   async function findSymbols(query: string): Promise<unknown[]> {
     await ensureConnected();
-    const result = await client.find.symbols({ query: { query } });
+    const result = await withTimeout(
+      () => client.find.symbols({ query: { query } }),
+      'Find symbols'
+    );
     return result.data ?? [];
   }
 

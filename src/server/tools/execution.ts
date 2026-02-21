@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import type { OpenCodeClient } from '../../client/opencode.js';
 import { resolveModel } from '../../client/opencode.js';
+import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 
 // ============================================================================
 // Input Schemas (exported for MCP SDK)
@@ -14,7 +15,7 @@ import { resolveModel } from '../../client/opencode.js';
 
 export const INPUT_SCHEMAS = {
   RunInputSchema: {
-    prompt: z.string().min(1).describe('The task or question for OpenCode'),
+    prompt: z.string().min(1, { error: 'Prompt is required' }).describe('The task or question for OpenCode'),
     model: z.string().optional().describe('Model in format provider/model (e.g., anthropic/claude-sonnet-4)'),
     agent: z.string().optional().describe('Agent to use: build, plan, or custom agent name'),
     workingDirectory: z.string().optional().describe('Project directory path'),
@@ -30,14 +31,14 @@ export const INPUT_SCHEMAS = {
   },
   
   SessionPromptInputSchema: {
-    sessionId: z.string().min(1).describe('Session ID from opencode_session_create'),
-    prompt: z.string().min(1).describe('The message to send'),
+    sessionId: z.string().min(1, { error: 'Session ID is required' }).describe('Session ID from opencode_session_create'),
+    prompt: z.string().min(1, { error: 'Prompt is required' }).describe('The message to send'),
     files: z.array(z.string()).optional().describe('File paths to attach'),
     noReply: z.boolean().optional().describe('Add context without triggering AI response'),
   },
   
   SessionIdInputSchema: {
-    sessionId: z.string().min(1).describe('Session ID'),
+    sessionId: z.string().min(1, { error: 'Session ID is required' }).describe('Session ID'),
   },
   
   EmptySchema: {},
@@ -140,10 +141,11 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
           }, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Executing OpenCode task',
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -161,10 +163,11 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
           }, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Creating OpenCode session',
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -179,10 +182,16 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
           content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const suggestions = errorMessage.toLowerCase().includes('session')
+          ? ERROR_SUGGESTIONS.sessionNotFound
+          : ERROR_SUGGESTIONS.connectionFailed;
+        
+        return createErrorResponse(
+          'Sending prompt to session',
+          error,
+          suggestions
+        );
       }
     },
 
@@ -193,10 +202,11 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
           content: [{ type: 'text' as const, text: JSON.stringify(sessions, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Listing sessions',
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -204,13 +214,17 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
       try {
         const success = await client.abortSession(params.sessionId);
         return {
-          content: [{ type: 'text' as const, text: JSON.stringify({ success }) }],
+          content: [{ type: 'text' as const, text: JSON.stringify({ 
+            success,
+            message: success ? 'Session aborted successfully' : 'Session may have already completed',
+          }) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Aborting session',
+          error,
+          ERROR_SUGGESTIONS.sessionNotFound
+        );
       }
     },
 
@@ -223,10 +237,11 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
           }, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Sharing session',
+          error,
+          ERROR_SUGGESTIONS.sessionNotFound
+        );
       }
     },
   };

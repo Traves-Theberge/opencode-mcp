@@ -5,7 +5,65 @@ All notable changes to the OpenCode MCP Server project will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2025-02-21
+
+### Added
+- **Tool Annotations**: MCP-compliant annotations for all 29 tools
+  - `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`
+  - Presets: `readOnly`, `readOnlyExternal`, `writeLocal`, `writeExternal`, `create`
+  - See `src/server/tools/schemas.ts` for definitions
+- **Actionable Error Messages**: All errors now include specific suggestions
+  - `createErrorResponse()` helper function with formatted output
+  - 9 error suggestion categories: connection, session, file, skill, agent, auth, timeout, input, mcp
+  - Errors guide users toward resolution with numbered steps
+- **Output Schema Definitions**: Zod schemas for all tool responses
+  - `RunOutputSchema`, `SessionCreateOutputSchema`, `AgentListOutputSchema`, etc.
+  - Ready for future MCP output schema validation
+- **Pagination Support**: Schema and helper for paginated list operations
+  - `PaginationSchema` with limit, offset, cursor
+  - `createPaginatedResponse()` helper function
+- **Structured Logging**: Configurable log levels via environment variable
+  - Levels: `debug`, `info`, `warn`, `error`, `none`
+  - Timestamp support via `OPENCODE_LOG_TIMESTAMP`
+  - All logs to stderr (doesn't interfere with MCP stdio)
+  - See `src/utils/logger.ts` and [Logging Guide](docs/guides/LOGGING.md)
+- **SDK Response Validation**: Zod validation for all OpenCode SDK responses
+  - `validateWithSchema()` helper with graceful fallback
+  - Validates sessions, agents, providers, files, prompts
+- **Request Timeout Handling**: Configurable timeouts with proper cleanup
+  - `withTimeout()` wrapper using AbortController
+  - Configurable via `OPENCODE_TIMEOUT` environment variable
+- **HTTP Transport Improvements**:
+  - New `/api` endpoint with complete API documentation
+  - Stateful session support via `/mcp/:sessionId`
+  - `DELETE /mcp/:sessionId` for closing sessions
+  - Session store with proper cleanup on server shutdown
+  - Comprehensive JSDoc documentation for stateless vs stateful modes
+- **Integration Tests**: 10 new tests for schemas and error handling
+  - Tests for `createErrorResponse()` function
+  - Tests for all 29 tool annotations
+  - Tests for annotation presets
+
+### Changed
+- Improved all error messages to include actionable suggestions
+- HTTP transport now properly manages session state with cleanup
+- Client wrapper validates SDK responses with Zod (graceful fallback on validation failure)
+- All tool handlers use new error response format with suggestions
+- Updated tool registration to include annotations
+
+### Fixed
+- Import paths in integration tests
+- Type safety in tool registration (using proper type assertions)
+
+### Documentation
+- Updated README with new features, environment variables, HTTP endpoints
+- Added Tool Annotations Reference to API docs
+- Added Error Response Format to API docs
+- Added Logging Guide ([docs/guides/LOGGING.md](docs/guides/LOGGING.md))
+- Added Error Handling Guide ([docs/guides/ERRORS.md](docs/guides/ERRORS.md))
+- Updated Architecture docs with annotations and logging sections
+
+## [0.1.0] - 2025-02-21
 
 ### Added
 - Initial project structure and configuration
@@ -94,9 +152,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed TODO comment in files.ts, replaced with helpful guidance
 - Added missing smoke tests for Skills, MCP, and ToolConfig categories
 
-## [0.1.0] - TBD
-
-First stable release.
-
-[Unreleased]: https://github.com/opencode-mcp/server/compare/v0.1.0...HEAD
+[0.2.0]: https://github.com/opencode-mcp/server/releases/tag/v0.2.0
 [0.1.0]: https://github.com/opencode-mcp/server/releases/tag/v0.1.0

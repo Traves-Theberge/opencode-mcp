@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/node/v/@opencode-mcp/server.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![Zod](https://img.shields.io/badge/Zod-4.0-purple.svg)](https://zod.dev/)
 
 ## Overview
 
@@ -23,8 +24,12 @@ OpenCode MCP Server allows any MCP-compatible client (Cursor, Windsurf, Claude D
 
 - **Full OpenCode Integration**: Access all OpenCode capabilities via MCP tools
 - **29 Tools**: Complete toolset for coding, config, agents, skills, and MCP management
-- **Dual Transport**: stdio (local) and HTTP (remote) support
-- **Type-Safe**: Full TypeScript support with Zod validation
+- **Tool Annotations**: MCP-compliant annotations for better LLM discoverability
+- **Dual Transport**: stdio (local) and HTTP (remote) with stateless/stateful modes
+- **Type-Safe**: Full TypeScript support with Zod v4 validation
+- **Actionable Errors**: Error messages include specific suggestions for resolution
+- **Request Timeouts**: Configurable timeout handling with proper cleanup
+- **Structured Logging**: Debug, info, warn, error levels via environment variable
 - **Session Management**: Create, manage, and share coding sessions
 - **Agent Delegation**: Delegate tasks to specialized agents (build, plan, explore)
 - **Skill System**: Discover and create reusable skill definitions
@@ -196,8 +201,8 @@ Use opencode_skill_create to create a skill for database migration patterns
 - No configuration needed
 
 ### HTTP
-- Best for remote access
-- Multiple clients
+- Best for remote access and multiple clients
+- Supports stateless and stateful sessions
 - Configure with environment variables:
 
 ```bash
@@ -205,9 +210,19 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=3000 npx @opencode-mcp/server
 ```
 
 **Endpoints**:
-- `GET /health` - Health check
-- `POST /mcp` - MCP requests
-- `GET /mcp` - SSE streaming
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/api` | GET | API documentation |
+| `/mcp` | POST | Stateless MCP requests |
+| `/mcp` | GET | SSE streaming (stateless) |
+| `/mcp/:sessionId` | POST | Stateful MCP requests |
+| `/mcp/:sessionId` | GET | SSE streaming (stateful) |
+| `/mcp/:sessionId` | DELETE | Close stateful session |
+
+**Modes**:
+- **Stateless** (default): No session state between requests, better for scaling
+- **Stateful**: Session state maintained via sessionId, required for multi-turn context
 
 ## Environment Variables
 
@@ -216,10 +231,28 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=3000 npx @opencode-mcp/server
 | `OPENCODE_SERVER_URL` | `http://localhost:4096` | OpenCode server URL |
 | `OPENCODE_AUTO_START` | `true` | Auto-start OpenCode |
 | `OPENCODE_DEFAULT_MODEL` | - | Default model |
-| `OPENCODE_TIMEOUT` | `120000` | Timeout in ms |
-| `MCP_TRANSPORT` | `stdio` | Transport mode |
+| `OPENCODE_TIMEOUT` | `120000` | Request timeout in ms |
+| `OPENCODE_LOG_LEVEL` | `info` | Log level (debug, info, warn, error, none) |
+| `OPENCODE_LOG_TIMESTAMP` | `false` | Include timestamps in logs |
+| `MCP_TRANSPORT` | `stdio` | Transport mode (stdio or http) |
 | `MCP_HTTP_PORT` | `3000` | HTTP port |
-| `MCP_CORS_ORIGINS` | `*` | CORS origins |
+| `MCP_CORS_ORIGINS` | `*` | CORS origins (comma-separated) |
+
+## Error Handling
+
+All tools return errors in a consistent format with actionable suggestions:
+
+```
+Error: <operation> failed.
+
+Details: <error message>
+
+Suggestions:
+  1. <actionable suggestion>
+  2. <another suggestion>
+```
+
+See [Error Handling Guide](docs/guides/ERRORS.md) for details.
 
 ## Development
 
@@ -235,14 +268,19 @@ npm run dev
 # Run tests
 npm test
 
+# Run linting
+npm run lint
+
 # Build
 npm run build
 ```
 
 ## Documentation
 
-- [API Reference](docs/api/TOOLS.md) - Complete tool documentation
+- [API Reference](docs/api/TOOLS.md) - Complete tool documentation with annotations
 - [IDE Setup Guide](docs/guides/IDE_SETUP.md) - Configure your IDE
+- [Logging Guide](docs/guides/LOGGING.md) - Configure logging levels
+- [Error Handling Guide](docs/guides/ERRORS.md) - Error format and categories
 - [Architecture](docs/ARCHITECTURE.md) - System design
 
 ## Contributing

@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import type { OpenCodeClient } from '../../client/opencode.js';
+import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 
 // ============================================================================
 // Input Schemas (exported for MCP SDK)
@@ -18,9 +19,9 @@ export const INPUT_SCHEMAS = {
   },
   
   ModelConfigureInputSchema: {
-    provider: z.string().min(1).describe('Provider ID'),
-    model: z.string().min(1).describe('Model ID'),
-    options: z.record(z.string(), z.any()).describe('Model options (temperature, reasoningEffort, etc.)'),
+    provider: z.string().min(1, { error: 'Provider ID is required' }).describe('Provider ID'),
+    model: z.string().min(1, { error: 'Model ID is required' }).describe('Model ID'),
+    options: z.record(z.string(), z.unknown()).describe('Model options (temperature, reasoningEffort, etc.)'),
   },
   
   ConfigUpdateInputSchema: {
@@ -32,7 +33,7 @@ export const INPUT_SCHEMAS = {
   },
   
   AuthSetInputSchema: {
-    provider: z.string().min(1).describe('Provider ID (e.g., anthropic, openai)'),
+    provider: z.string().min(1, { error: 'Provider ID is required' }).describe('Provider ID (e.g., anthropic, openai)'),
     type: z.enum(['api', 'oauth']).describe('Authentication type'),
     key: z.string().optional().describe('API key (for api type)'),
     token: z.string().optional().describe('OAuth token (for oauth type)'),
@@ -153,10 +154,11 @@ export function createConfigHandlers(client: OpenCodeClient) {
           content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error listing models: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Listing models',
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -179,14 +181,24 @@ export function createConfigHandlers(client: OpenCodeClient) {
                   },
                 },
               },
+              example: `"provider": {
+  "${params.provider}": {
+    "models": {
+      "${params.model}": {
+        "options": ${JSON.stringify(params.options, null, 4)}
+      }
+    }
+  }
+}`,
             }, null, 2) 
           }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error configuring model: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Configuring model',
+          error,
+          ERROR_SUGGESTIONS.invalidInput
+        );
       }
     },
 
@@ -207,10 +219,11 @@ export function createConfigHandlers(client: OpenCodeClient) {
           content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error listing providers: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Listing providers',
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -228,10 +241,11 @@ export function createConfigHandlers(client: OpenCodeClient) {
           content: [{ type: 'text' as const, text: JSON.stringify(config, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error getting config: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Getting configuration',
+          error,
+          ERROR_SUGGESTIONS.invalidInput
+        );
       }
     },
 
@@ -258,24 +272,33 @@ export function createConfigHandlers(client: OpenCodeClient) {
               message: 'Add these settings to your opencode.json:',
               config: updates,
               note: 'Environment variables can also be used to override these settings.',
+              examples: {
+                model: 'Set OPENCODE_DEFAULT_MODEL=anthropic/claude-sonnet-4',
+                timeout: 'Set OPENCODE_TIMEOUT=300000 (5 minutes)',
+              },
             }, null, 2) 
           }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error updating config: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Updating configuration',
+          error,
+          ERROR_SUGGESTIONS.invalidInput
+        );
       }
     },
 
     async opencode_auth_set(params: { provider: string; type: 'api' | 'oauth'; key?: string; token?: string }) {
       try {
         if (params.type === 'api' && !params.key) {
-          return {
-            content: [{ type: 'text' as const, text: 'Error: API key is required for api authentication type' }],
-            isError: true,
-          };
+          return createErrorResponse(
+            'Setting authentication',
+            new Error('API key is required for api authentication type'),
+            [
+              `Provide the key parameter with your API key`,
+              `Example: opencode_auth_set(provider="${params.provider}", type="api", key="sk-...")`,
+            ]
+          );
         }
         
         // Return instructions for setting auth
@@ -287,21 +310,25 @@ export function createConfigHandlers(client: OpenCodeClient) {
               provider: params.provider,
               instructions: params.type === 'api' 
                 ? [
-                    `Set environment variable: ${params.provider.toUpperCase().replace(/-/g, '_')}_API_KEY=${params.key}`,
+                    `Set environment variable: ${params.provider.toUpperCase().replace(/-/g, '_')}_API_KEY=${params.key?.substring(0, 10)}...`,
                     `Or run: opencode auth login ${params.provider}`,
+                    `Or add to opencode.json under providers.${params.provider}.apiKey`,
                   ]
                 : [
                     `Run: opencode auth login ${params.provider}`,
                     'This will open a browser for OAuth authentication.',
+                    'Complete the authentication flow in your browser.',
                   ],
+              security_note: 'Never commit API keys to version control. Use environment variables or secure secret management.',
             }, null, 2) 
           }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error setting auth: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Setting authentication',
+          error,
+          ERROR_SUGGESTIONS.unauthorized
+        );
       }
     },
   };

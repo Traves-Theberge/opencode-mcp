@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
-import { createClient } from '../src/client/opencode.js';
+import { createClient } from '../../src/client/opencode.js';
 
 // Skip integration tests if no server is available
 const shouldRunIntegrationTests = process.env.RUN_INTEGRATION_TESTS === 'true';

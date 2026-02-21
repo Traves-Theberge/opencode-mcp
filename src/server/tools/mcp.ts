@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import type { OpenCodeClient } from '../../client/opencode.js';
+import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 
 // ============================================================================
 // Input Schemas (exported for MCP SDK)
@@ -15,7 +16,7 @@ export const INPUT_SCHEMAS = {
   McpListInputSchema: {},
   
   McpAddInputSchema: {
-    name: z.string().min(1).describe('Unique server name'),
+    name: z.string().min(1, { error: 'Server name is required' }).describe('Unique server name'),
     type: z.enum(['local', 'remote']).describe('Server type'),
     command: z.array(z.string()).optional().describe('Command to run (for local)'),
     environment: z.record(z.string(), z.string()).optional().describe('Environment variables (for local)'),
@@ -26,11 +27,11 @@ export const INPUT_SCHEMAS = {
   },
   
   McpRemoveInputSchema: {
-    name: z.string().min(1).describe('Server name to remove'),
+    name: z.string().min(1, { error: 'Server name is required' }).describe('Server name to remove'),
   },
   
   McpEnableInputSchema: {
-    name: z.string().min(1).describe('Server name'),
+    name: z.string().min(1, { error: 'Server name is required' }).describe('Server name'),
     enabled: z.boolean().describe('Enable or disable'),
   },
   
@@ -120,14 +121,21 @@ export function createMcpHandlers(_client: OpenCodeClient & { getMcpStatus?: () 
               message: 'MCP servers are configured in opencode.json under the "mcp" key.',
               servers: mcpServers,
               note: 'Use "opencode mcp list" CLI command for full status details.',
+              cli_commands: {
+                list: 'opencode mcp list',
+                add: 'opencode mcp add <name>',
+                remove: 'opencode mcp remove <name>',
+              },
+              config_location: '~/.config/opencode/opencode.json or .opencode/opencode.json in project',
             }, null, 2) 
           }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error listing MCP servers: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Listing MCP servers',
+          error,
+          ERROR_SUGGESTIONS.mcpError
+        );
       }
     },
 
@@ -142,6 +150,29 @@ export function createMcpHandlers(_client: OpenCodeClient & { getMcpStatus?: () 
       timeout?: number;
     }) {
       try {
+        // Validate required fields based on type
+        if (params.type === 'local' && !params.command) {
+          return createErrorResponse(
+            'Adding MCP server',
+            new Error('Command is required for local MCP servers'),
+            [
+              'Provide the command parameter with the command to run the MCP server',
+              'Example: command=["npx", "-y", "@modelcontextprotocol/server-filesystem", "/path"]',
+            ]
+          );
+        }
+        
+        if (params.type === 'remote' && !params.url) {
+          return createErrorResponse(
+            'Adding MCP server',
+            new Error('URL is required for remote MCP servers'),
+            [
+              'Provide the url parameter with the MCP server URL',
+              'Example: url="https://mcp.example.com/sse"',
+            ]
+          );
+        }
+        
         // Build the MCP configuration
         const mcpConfig: Record<string, unknown> = {
           type: params.type,
@@ -180,14 +211,19 @@ export function createMcpHandlers(_client: OpenCodeClient & { getMcpStatus?: () 
     "${params.name}": ${JSON.stringify(mcpConfig, null, 4)}
   }
 }`,
+              after_config_update: [
+                'Restart OpenCode to load the new MCP server',
+                'Use "opencode mcp list" to verify the server is connected',
+              ],
             }, null, 2) 
           }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error adding MCP server: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          `Adding MCP server "${params.name}"`,
+          error,
+          ERROR_SUGGESTIONS.mcpError
+        );
       }
     },
 
@@ -199,14 +235,17 @@ export function createMcpHandlers(_client: OpenCodeClient & { getMcpStatus?: () 
             text: JSON.stringify({
               message: `Remove "${params.name}" from the "mcp" section in your opencode.json`,
               instruction: `Delete the "${params.name}" key from the mcp object in your configuration file.`,
+              config_location: '~/.config/opencode/opencode.json or .opencode/opencode.json in project',
+              after_removal: 'Restart OpenCode for changes to take effect',
             }, null, 2) 
           }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error removing MCP server: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          `Removing MCP server "${params.name}"`,
+          error,
+          ERROR_SUGGESTIONS.mcpError
+        );
       }
     },
 
@@ -218,14 +257,19 @@ export function createMcpHandlers(_client: OpenCodeClient & { getMcpStatus?: () 
             text: JSON.stringify({
               message: `Set "enabled" to ${params.enabled} for "${params.name}" in your opencode.json`,
               instruction: `Update the mcp.${params.name}.enabled property in your configuration file.`,
+              config_path: `opencode.json → mcp → ${params.name} → enabled: ${params.enabled}`,
+              note: params.enabled 
+                ? 'The server will connect on next OpenCode restart'
+                : 'The server will be disconnected on next OpenCode restart',
             }, null, 2) 
           }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error updating MCP server: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          `Updating MCP server "${params.name}"`,
+          error,
+          ERROR_SUGGESTIONS.mcpError
+        );
       }
     },
   };

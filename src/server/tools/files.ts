@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import type { OpenCodeClient } from '../../client/opencode.js';
+import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 
 // ============================================================================
 // Input Schemas (exported for MCP SDK)
@@ -13,22 +14,22 @@ import type { OpenCodeClient } from '../../client/opencode.js';
 
 export const INPUT_SCHEMAS = {
   FileReadInputSchema: {
-    path: z.string().min(1).describe('File path relative to project root'),
+    path: z.string().min(1, { error: 'File path is required' }).describe('File path relative to project root'),
   },
   
   FileSearchInputSchema: {
-    pattern: z.string().min(1).describe('Search pattern (regex supported)'),
+    pattern: z.string().min(1, { error: 'Search pattern is required' }).describe('Search pattern (regex supported)'),
     directory: z.string().optional().describe('Limit to directory'),
   },
   
   FindFilesInputSchema: {
-    query: z.string().min(1).describe('File name pattern (fuzzy match)'),
+    query: z.string().min(1, { error: 'Query is required' }).describe('File name pattern (fuzzy match)'),
     type: z.enum(['file', 'directory']).optional().describe('Filter by type'),
     limit: z.number().min(1).max(200).optional().describe('Max results (1-200)'),
   },
   
   FindSymbolsInputSchema: {
-    query: z.string().min(1).describe('Symbol name to search for'),
+    query: z.string().min(1, { error: 'Symbol query is required' }).describe('Symbol name to search for'),
   },
   
   FileStatusInputSchema: {
@@ -108,10 +109,17 @@ export function createFileHandlers(client: OpenCodeClient) {
           content: [{ type: 'text' as const, text: result.content }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error reading file: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const suggestions = errorMessage.toLowerCase().includes('not found') || 
+                           errorMessage.toLowerCase().includes('does not exist')
+          ? ERROR_SUGGESTIONS.fileNotFound
+          : ERROR_SUGGESTIONS.connectionFailed;
+        
+        return createErrorResponse(
+          `Reading file "${params.path}"`,
+          error,
+          suggestions
+        );
       }
     },
 
@@ -122,10 +130,11 @@ export function createFileHandlers(client: OpenCodeClient) {
           content: [{ type: 'text' as const, text: JSON.stringify(results, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error searching files: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          `Searching for pattern "${params.pattern}"`,
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -136,10 +145,11 @@ export function createFileHandlers(client: OpenCodeClient) {
           content: [{ type: 'text' as const, text: JSON.stringify(results, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error finding files: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          `Finding files matching "${params.query}"`,
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -150,10 +160,11 @@ export function createFileHandlers(client: OpenCodeClient) {
           content: [{ type: 'text' as const, text: JSON.stringify(results, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error finding symbols: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          `Finding symbols matching "${params.query}"`,
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -172,10 +183,11 @@ export function createFileHandlers(client: OpenCodeClient) {
           }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error getting file status: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Getting file status',
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
   };

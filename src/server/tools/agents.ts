@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import type { OpenCodeClient } from '../../client/opencode.js';
 import { resolveModel } from '../../client/opencode.js';
+import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 
 // ============================================================================
 // Input Schemas (exported for MCP SDK)
@@ -16,8 +17,8 @@ export const INPUT_SCHEMAS = {
   AgentListInputSchema: {},
   
   AgentDelegateInputSchema: {
-    agent: z.string().min(1).describe('Agent name to invoke (e.g., build, plan, explore, or custom agent)'),
-    prompt: z.string().min(1).describe('Task for the agent'),
+    agent: z.string().min(1, { error: 'Agent name is required' }).describe('Agent name to invoke (e.g., build, plan, explore, or custom agent)'),
+    prompt: z.string().min(1, { error: 'Prompt is required' }).describe('Task for the agent'),
     sessionId: z.string().optional().describe('Session ID (creates new if not provided)'),
     model: z.string().optional().describe('Model in format provider/model'),
   },
@@ -97,10 +98,11 @@ export function createAgentHandlers(client: OpenCodeClient, defaultModel?: strin
           content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error listing agents: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Listing agents',
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -133,10 +135,17 @@ export function createAgentHandlers(client: OpenCodeClient, defaultModel?: strin
           content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error delegating to agent: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const suggestions = errorMessage.toLowerCase().includes('agent') || 
+                           errorMessage.toLowerCase().includes('not found')
+          ? ERROR_SUGGESTIONS.agentNotFound
+          : ERROR_SUGGESTIONS.connectionFailed;
+        
+        return createErrorResponse(
+          `Delegating to agent "${params.agent}"`,
+          error,
+          suggestions
+        );
       }
     },
   };

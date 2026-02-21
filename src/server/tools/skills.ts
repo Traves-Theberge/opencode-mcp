@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import type { OpenCodeClient } from '../../client/opencode.js';
+import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 
 // ============================================================================
 // Input Schemas (exported for MCP SDK)
@@ -15,11 +16,11 @@ export const INPUT_SCHEMAS = {
   SkillListInputSchema: {},
   
   SkillLoadInputSchema: {
-    name: z.string().min(1).describe('Skill name to load'),
+    name: z.string().min(1, { error: 'Skill name is required' }).describe('Skill name to load'),
   },
   
   SkillCreateInputSchema: {
-    name: z.string().min(1).max(64).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Skill name must be lowercase alphanumeric with hyphens').describe('Skill name'),
+    name: z.string().min(1).max(64).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, { error: 'Skill name must be lowercase alphanumeric with hyphens' }).describe('Skill name'),
     description: z.string().min(1).max(1024).describe('When to use this skill'),
     content: z.string().min(1).describe('Skill content/instructions'),
     global: z.boolean().optional().describe('Create globally (default: project-local)'),
@@ -109,10 +110,11 @@ export function createSkillHandlers(client: OpenCodeClient) {
           content: [{ type: 'text' as const, text: JSON.stringify(skills, null, 2) }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error listing skills: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          'Listing skills',
+          error,
+          ERROR_SUGGESTIONS.connectionFailed
+        );
       }
     },
 
@@ -137,15 +139,17 @@ export function createSkillHandlers(client: OpenCodeClient) {
           }
         }
         
-        return {
-          content: [{ type: 'text' as const, text: `Skill "${params.name}" not found` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          `Loading skill "${params.name}"`,
+          new Error('Skill not found in any known location'),
+          ERROR_SUGGESTIONS.skillNotFound
+        );
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error loading skill: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          `Loading skill "${params.name}"`,
+          error,
+          ERROR_SUGGESTIONS.skillNotFound
+        );
       }
     },
 
@@ -176,14 +180,20 @@ ${params.content}`;
               message: 'Skill definition created. Save this content to the specified path:',
               path: skillPath,
               content: skillContent,
+              instructions: [
+                `Create the directory: mkdir -p ${basePath}/${params.name}`,
+                `Save the content to: ${skillPath}`,
+                'Or use opencode_run to create the file programmatically',
+              ],
             }, null, 2) 
           }],
         };
       } catch (error) {
-        return {
-          content: [{ type: 'text' as const, text: `Error creating skill: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
+        return createErrorResponse(
+          `Creating skill "${params.name}"`,
+          error,
+          ERROR_SUGGESTIONS.invalidInput
+        );
       }
     },
   };
