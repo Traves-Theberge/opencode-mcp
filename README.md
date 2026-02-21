@@ -49,9 +49,42 @@ opencode-mcp
 2. **OpenCode server running**: Start with `opencode serve` or the TUI
 3. **API keys configured**: Set up your LLM provider keys in OpenCode
 
-### Configure in Cursor
+### Configure in Your IDE
 
-Add to your Cursor settings (`~/.cursor/mcp.json`):
+OpenCode MCP Server works with all major AI-enabled IDEs:
+
+| IDE | Config File | Setup Guide |
+|-----|-------------|-------------|
+| [Cursor](docs/setup-guides/cursor.md) | `~/.cursor/mcp.json` | [Full Guide](docs/setup-guides/cursor.md) |
+| [Windsurf](docs/setup-guides/windsurf.md) | `~/.codeium/windsurf/mcp_config.json` | [Full Guide](docs/setup-guides/windsurf.md) |
+| [Claude Desktop](docs/setup-guides/claude-desktop.md) | `~/Library/Application Support/Claude/claude_desktop_config.json` | [Full Guide](docs/setup-guides/claude-desktop.md) |
+| [VS Code (Copilot)](docs/setup-guides/vscode-copilot.md) | `.vscode/mcp.json` | [Full Guide](docs/setup-guides/vscode-copilot.md) |
+| [Cline](docs/setup-guides/cline.md) | `cline_mcp_settings.json` | [Full Guide](docs/setup-guides/cline.md) |
+| [Continue.dev](docs/setup-guides/continue.md) | `.continue/mcpServers/` | [Full Guide](docs/setup-guides/continue.md) |
+| [Zed](docs/setup-guides/zed.md) | `~/.config/zed/settings.json` | [Full Guide](docs/setup-guides/zed.md) |
+| [OpenCode](docs/setup-guides/opencode.md) | `opencode.json` | [Full Guide](docs/setup-guides/opencode.md) |
+
+### Quick Config (Cursor)
+
+Add to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "opencode": {
+      "command": "npx",
+      "args": ["-y", "@opencode-mcp/server"],
+      "env": {
+        "OPENCODE_SERVER_URL": "http://localhost:4096"
+      }
+    }
+  }
+}
+```
+
+### Quick Config (Claude Desktop)
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
@@ -67,23 +100,7 @@ Add to your Cursor settings (`~/.cursor/mcp.json`):
 }
 ```
 
-### Configure in Claude Desktop
-
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "opencode": {
-      "command": "npx",
-      "args": ["-y", "@opencode-mcp/server"],
-      "env": {
-        "OPENCODE_SERVER_URL": "http://localhost:4096"
-      }
-    }
-  }
-}
-```
+See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for all supported IDEs.
 
 ## Available Tools (29)
 

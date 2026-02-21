@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcpServers": {
+    "opencode": {
+      "command": "npx",
+      "args": ["-y", "@opencode-mcp/server"],
+      "env": {
+        "OPENCODE_SERVER_URL": "http://localhost:4096"
+      }
+    }
+  }
+}

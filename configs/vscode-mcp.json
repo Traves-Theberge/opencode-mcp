@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "opencode": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@opencode-mcp/server"],
+      "env": {
+        "OPENCODE_SERVER_URL": "http://localhost:4096"
+      }
+    }
+  }
+}
