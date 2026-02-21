@@ -115,6 +115,7 @@ Execute a coding task through OpenCode AI agent.
 ```json
 {
   "prompt": "string (required) - The task or question for OpenCode",
+  "workingDirectory": "string (required) - Project directory path (where files will be created/modified)",
   "model": "string (optional) - Model in format provider/model",
   "agent": "string (optional) - Agent to use: build, plan, or custom agent name",
   "files": "string[] (optional) - File paths to attach as context",
@@ -126,6 +127,7 @@ Execute a coding task through OpenCode AI agent.
 ```json
 {
   "prompt": "Implement a React hook for fetching data with loading and error states",
+  "workingDirectory": "/home/user/projects/my-app",
   "model": "anthropic/claude-sonnet-4",
   "files": ["src/hooks/useUser.ts"]
 }
@@ -142,13 +144,14 @@ Create a new OpenCode session for multi-turn conversations.
 **Input Schema**:
 ```json
 {
+  "workingDirectory": "string (required) - Project directory path",
   "title": "string (optional) - Session title",
   "model": "string (optional) - Model in format provider/model",
   "agent": "string (optional) - Agent to use"
 }
 ```
 
-**Returns**: `{ sessionId: string, title: string }`
+**Returns**: `{ sessionId: string, title: string, workingDirectory: string }`
 
 ---
 

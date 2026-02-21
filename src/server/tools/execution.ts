@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { stat } from 'fs/promises';
 import type { OpenCodeClient } from '../../client/opencode.js';
 import { resolveModel } from '../../client/opencode.js';
 import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
@@ -16,18 +17,18 @@ import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 export const INPUT_SCHEMAS = {
   RunInputSchema: {
     prompt: z.string().min(1, { error: 'Prompt is required' }).describe('The task or question for OpenCode'),
+    workingDirectory: z.string().min(1, { error: 'Working directory is required - specify the project directory path' }).describe('Project directory path (REQUIRED - the directory where files should be created/modified)'),
     model: z.string().optional().describe('Model in format provider/model (e.g., anthropic/claude-sonnet-4)'),
     agent: z.string().optional().describe('Agent to use: build, plan, or custom agent name'),
-    workingDirectory: z.string().optional().describe('Project directory path'),
     files: z.array(z.string()).optional().describe('File paths to attach as context'),
     noReply: z.boolean().optional().describe('Add context without triggering AI response'),
   },
   
   SessionCreateInputSchema: {
+    workingDirectory: z.string().min(1, { error: 'Working directory is required' }).describe('Project directory path (REQUIRED)'),
     title: z.string().optional().describe('Session title'),
     model: z.string().optional().describe('Model in format provider/model'),
     agent: z.string().optional().describe('Agent to use'),
-    workingDirectory: z.string().optional().describe('Project directory'),
   },
   
   SessionPromptInputSchema: {
@@ -52,30 +53,31 @@ export function getExecutionToolDefinitions(): Array<{ name: string; description
   return [
     {
       name: 'opencode_run',
-      description: 'Execute a coding task through OpenCode AI agent. Use for implementing features, refactoring, debugging, explaining code, or any software engineering task.',
+      description: 'Execute a coding task through OpenCode AI agent. Use for implementing features, refactoring, debugging, explaining code, or any software engineering task. IMPORTANT: workingDirectory is REQUIRED - always specify the project directory.',
       inputSchema: {
         type: 'object',
         properties: {
           prompt: { type: 'string', description: 'The task or question for OpenCode' },
+          workingDirectory: { type: 'string', description: 'Project directory path (REQUIRED - where files will be created/modified)' },
           model: { type: 'string', description: 'Model in format provider/model' },
           agent: { type: 'string', description: 'Agent to use' },
-          workingDirectory: { type: 'string', description: 'Project directory path' },
           files: { type: 'array', items: { type: 'string' }, description: 'File paths to attach' },
           noReply: { type: 'boolean', description: 'Add context without triggering AI response' },
         },
-        required: ['prompt'],
+        required: ['prompt', 'workingDirectory'],
       },
     },
     {
       name: 'opencode_session_create',
-      description: 'Create a new OpenCode session for multi-turn conversations. Returns a session ID that can be used for subsequent prompts.',
+      description: 'Create a new OpenCode session for multi-turn conversations. Returns a session ID that can be used for subsequent prompts. IMPORTANT: workingDirectory is REQUIRED.',
       inputSchema: {
         type: 'object',
         properties: {
+          workingDirectory: { type: 'string', description: 'Project directory path (REQUIRED)' },
           title: { type: 'string', description: 'Session title' },
           model: { type: 'string', description: 'Model in format provider/model' },
-          workingDirectory: { type: 'string', description: 'Project directory path' },
         },
+        required: ['workingDirectory'],
       },
     },
     {
@@ -124,9 +126,35 @@ export function getExecutionToolDefinitions(): Array<{ name: string; description
 
 export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: string) {
   return {
-    async opencode_run(params: { prompt: string; model?: string; agent?: string; workingDirectory?: string; files?: string[]; noReply?: boolean }) {
+    async opencode_run(params: { prompt: string; workingDirectory: string; model?: string; agent?: string; files?: string[]; noReply?: boolean }) {
       try {
-        // Create a session for this run, passing working directory if provided
+        // Validate working directory exists
+        try {
+          const dirStat = await stat(params.workingDirectory);
+          if (!dirStat.isDirectory()) {
+            return createErrorResponse(
+              'Validating working directory',
+              new Error(`${params.workingDirectory} is not a directory`),
+              [
+                'Provide a valid directory path',
+                'Use absolute paths for clarity',
+                'Example: /home/user/projects/my-project',
+              ]
+            );
+          }
+        } catch (e) {
+          return createErrorResponse(
+            'Validating working directory',
+            new Error(`Directory does not exist: ${params.workingDirectory}`),
+            [
+              'Create the directory first, or use an existing project directory',
+              'Use absolute paths for clarity',
+              `Error: ${e instanceof Error ? e.message : String(e)}`,
+            ]
+          );
+        }
+
+        // Create a session for this run, passing working directory
         const session = await client.createSession(
           undefined,
           resolveModel(params.model, defaultModel),
@@ -158,8 +186,32 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
       }
     },
 
-    async opencode_session_create(params: { title?: string; model?: string; workingDirectory?: string }) {
+    async opencode_session_create(params: { workingDirectory: string; title?: string; model?: string }) {
       try {
+        // Validate working directory exists
+        try {
+          const dirStat = await stat(params.workingDirectory);
+          if (!dirStat.isDirectory()) {
+            return createErrorResponse(
+              'Validating working directory',
+              new Error(`${params.workingDirectory} is not a directory`),
+              [
+                'Provide a valid directory path',
+                'Use absolute paths for clarity',
+              ]
+            );
+          }
+        } catch (e) {
+          return createErrorResponse(
+            'Validating working directory',
+            new Error(`Directory does not exist: ${params.workingDirectory}`),
+            [
+              'Create the directory first, or use an existing project directory',
+              `Error: ${e instanceof Error ? e.message : String(e)}`,
+            ]
+          );
+        }
+
         const session = await client.createSession(
           params.title,
           resolveModel(params.model, defaultModel),
