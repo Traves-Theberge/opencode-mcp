@@ -4,7 +4,7 @@
  * Central registration of all MCP tools.
  */
 
-import type { ToolDefinition } from '../utils/types.js';
+import type { ToolDefinition } from '../../utils/types.js';
 import { getExecutionToolDefinitions } from './execution.js';
 import { getFileToolDefinitions } from './files.js';
 import { getConfigToolDefinitions } from './config.js';
@@ -74,7 +74,7 @@ export function createAllHandlers(client: OpenCodeClient, defaultModel?: string)
 /**
  * Tool name to handler mapping
  */
-export function getToolHandlerMap(handlers: AllHandlers): Record<string, (input: unknown) => Promise<import('../utils/types.js').ToolResult>> {
+export function getToolHandlerMap(handlers: AllHandlers): Record<string, (input: unknown) => Promise<import('../../utils/types.js').ToolResult>> {
   return {
     // Execution tools
     opencode_run: handlers.execution.opencode_run,

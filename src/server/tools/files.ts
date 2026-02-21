@@ -5,8 +5,8 @@
  */
 
 import { z } from 'zod';
-import type { ToolDefinition, ToolResult } from '../utils/types.js';
-import type { OpenCodeClient } from '../client/opencode.js';
+import type { ToolDefinition, ToolResult } from '../../utils/types.js';
+import type { OpenCodeClient } from '../../client/opencode.js';
 
 // ============================================================================
 // Input Schemas
