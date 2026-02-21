@@ -22,8 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - cors v2.8.5
 - MIT LICENSE
 - README with quick start guide
-- Smoke tests for server, tools, and connection (18 tests passing)
+- Smoke tests for all tool categories (23 tests passing)
 - Integration tests scaffold
+- `.env.example` for environment configuration template
+- `CONTRIBUTING.md` with development and contribution guidelines
+- GitHub Actions CI/CD workflow with:
+  - Build matrix for Node.js 18, 20, 22
+  - TypeScript check, linting, smoke tests
+  - Coverage report generation
+  - Automated npm publish on version tags
+  - GitHub release creation
 
 ### Added - Tools (29 total)
 - **Execution Tools (6)**:
@@ -73,14 +81,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API reference (docs/api/TOOLS.md)
 - IDE setup guide (docs/guides/IDE_SETUP.md)
 - Architecture documentation (docs/ARCHITECTURE.md)
+- Contributing guidelines (docs/development/CONTRIBUTING.md)
 
 ### Changed
 - Updated to use MCP SDK v1.26.0 API with Zod schemas
 - Client wrapper now uses OpenCode SDK types directly
+- Improved smoke tests to cover all 7 tool categories
 
 ### Fixed
 - Correct import paths in tool files
 - Tool registration to use McpServer.tool() with Zod schemas
+- Removed TODO comment in files.ts, replaced with helpful guidance
+- Added missing smoke tests for Skills, MCP, and ToolConfig categories
 
 ## [0.1.0] - TBD
 
