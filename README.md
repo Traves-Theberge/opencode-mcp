@@ -251,11 +251,38 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=3000 npx @opencode-mcp/server
 | `OPENCODE_AUTO_START` | `true` | Auto-start OpenCode |
 | `OPENCODE_DEFAULT_MODEL` | - | Default model |
 | `OPENCODE_TIMEOUT` | `120000` | Request timeout in ms |
+| `OPENCODE_DEFAULT_PROJECT` | - | Default project directory (used when workingDirectory not specified) |
 | `OPENCODE_LOG_LEVEL` | `info` | Log level (debug, info, warn, error, none) |
 | `OPENCODE_LOG_TIMESTAMP` | `false` | Include timestamps in logs |
 | `MCP_TRANSPORT` | `stdio` | Transport mode (stdio or http) |
 | `MCP_HTTP_PORT` | `3000` | HTTP port |
 | `MCP_CORS_ORIGINS` | `*` | CORS origins (comma-separated, restrict in production) |
+
+## Project Directory Detection
+
+OpenCode MCP Server uses this priority to determine the working directory:
+
+1. **Explicit `workingDirectory` parameter** - passed in tool call
+2. **`OPENCODE_DEFAULT_PROJECT` environment variable** - set in MCP config
+3. **Auto-detection** - searches for `.git`, `package.json`, etc. from current directory
+4. **Fallback** - current working directory of MCP server process
+
+**Recommended:** Set `OPENCODE_DEFAULT_PROJECT` in your MCP config to avoid specifying the directory every time:
+
+```json
+{
+  "mcpServers": {
+    "opencode": {
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
+      "env": {
+        "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project"
+      }
+    }
+  }
+}
+```
 
 ## Error Handling
 

@@ -21,6 +21,7 @@ export type { Session, Agent, Provider } from '@opencode-ai/sdk';
 const SessionSchema = z.object({
   id: z.string(),
   title: z.string().optional(),
+  directory: z.string().optional(),
 }).passthrough();
 
 const AgentSchema = z.object({
@@ -58,7 +59,7 @@ const PromptResponseSchema = z.object({
 export interface OpenCodeClient {
   isHealthy(): Promise<boolean>;
   listSessions(): Promise<unknown[]>;
-  createSession(title?: string, model?: { providerID: string; modelID: string }, directory?: string): Promise<{ id: string; title?: string }>;
+  createSession(title?: string, model?: { providerID: string; modelID: string }, directory?: string): Promise<{ id: string; title?: string; directory?: string }>;
   getSession(id: string): Promise<unknown>;
   abortSession(id: string): Promise<boolean>;
   shareSession(id: string): Promise<{ id: string; shareToken?: string }>;
@@ -169,8 +170,12 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     title?: string, 
     _model?: { providerID: string; modelID: string },
     directory?: string
-  ): Promise<{ id: string; title?: string }> {
+  ): Promise<{ id: string; title?: string; directory?: string }> {
     await ensureConnected();
+    
+    // Debug logging
+    console.error(`[createSession] Creating session with directory: ${directory ?? 'not specified'}`);
+    
     const result = await withTimeout(
       () => client.session.create({ 
         body: { title },
@@ -178,8 +183,18 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
       }),
       'Create session'
     );
+    
     const session = validateWithSchema(result.data, SessionSchema, 'createSession');
-    return { id: session?.id ?? '', title: session?.title };
+    
+    // Log what we got back
+    console.error(`[createSession] Requested directory: ${directory ?? 'not specified'}`);
+    console.error(`[createSession] Session response:`, JSON.stringify(session, null, 2));
+    
+    return { 
+      id: session?.id ?? '', 
+      title: session?.title,
+      directory: session?.directory,
+    };
   }
 
   async function getSession(id: string): Promise<unknown> {

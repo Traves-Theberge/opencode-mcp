@@ -5,10 +5,92 @@
  */
 
 import { z } from 'zod';
-import { stat } from 'fs/promises';
+import { stat, access } from 'fs/promises';
+import { join, dirname } from 'path';
 import type { OpenCodeClient } from '../../client/opencode.js';
 import { resolveModel } from '../../client/opencode.js';
 import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
+
+// ============================================================================
+// Project Directory Detection
+// ============================================================================
+
+const PROJECT_MARKERS = [
+  '.git',
+  'package.json',
+  'Cargo.toml',
+  'go.mod',
+  'pyproject.toml',
+  'setup.py',
+  'pom.xml',
+  'build.gradle',
+];
+
+/**
+ * Try to find the project root by looking for project markers
+ */
+async function findProjectRoot(startDir: string): Promise<string | null> {
+  let currentDir = startDir;
+  
+  for (let i = 0; i < 20; i++) { // Max 20 levels up
+    for (const marker of PROJECT_MARKERS) {
+      try {
+        await access(join(currentDir, marker));
+        return currentDir;
+      } catch {
+        // Marker not found, continue
+      }
+    }
+    
+    const parent = dirname(currentDir);
+    if (parent === currentDir) break; // Reached root
+    currentDir = parent;
+  }
+  
+  return null;
+}
+
+/**
+ * Get the working directory to use
+ * Priority: explicit param > env var > project root detection > fallback
+ */
+async function getWorkingDirectory(explicitDir?: string): Promise<{ directory: string; source: string }> {
+  // If explicitly provided, use it
+  if (explicitDir) {
+    try {
+      const dirStat = await stat(explicitDir);
+      if (dirStat.isDirectory()) {
+        return { directory: explicitDir, source: 'explicit' };
+      }
+    } catch (e) {
+      throw new Error(`Specified directory does not exist: ${explicitDir}`);
+    }
+  }
+  
+  // Check for default project from environment variable
+  const envProject = process.env.OPENCODE_DEFAULT_PROJECT;
+  if (envProject) {
+    try {
+      const dirStat = await stat(envProject);
+      if (dirStat.isDirectory()) {
+        return { directory: envProject, source: 'env' };
+      }
+    } catch (e) {
+      console.error(`[getWorkingDirectory] OPENCODE_DEFAULT_PROJECT directory does not exist: ${envProject}`);
+    }
+  }
+  
+  // Try to detect from current working directory
+  const cwd = process.cwd();
+  const projectRoot = await findProjectRoot(cwd);
+  
+  if (projectRoot) {
+    return { directory: projectRoot, source: 'detected' };
+  }
+  
+  // Fallback to cwd
+  return { directory: cwd, source: 'fallback' };
+}
 
 // ============================================================================
 // Input Schemas (exported for MCP SDK)
@@ -17,7 +99,7 @@ import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 export const INPUT_SCHEMAS = {
   RunInputSchema: {
     prompt: z.string().min(1, { error: 'Prompt is required' }).describe('The task or question for OpenCode'),
-    workingDirectory: z.string().min(1, { error: 'Working directory is required - specify the project directory path' }).describe('Project directory path (REQUIRED - the directory where files should be created/modified)'),
+    workingDirectory: z.string().optional().describe('Project directory path (auto-detected if not specified)'),
     model: z.string().optional().describe('Model in format provider/model (e.g., anthropic/claude-sonnet-4)'),
     agent: z.string().optional().describe('Agent to use: build, plan, or custom agent name'),
     files: z.array(z.string()).optional().describe('File paths to attach as context'),
@@ -25,7 +107,7 @@ export const INPUT_SCHEMAS = {
   },
   
   SessionCreateInputSchema: {
-    workingDirectory: z.string().min(1, { error: 'Working directory is required' }).describe('Project directory path (REQUIRED)'),
+    workingDirectory: z.string().optional().describe('Project directory path (auto-detected if not specified)'),
     title: z.string().optional().describe('Session title'),
     model: z.string().optional().describe('Model in format provider/model'),
     agent: z.string().optional().describe('Agent to use'),
@@ -53,31 +135,31 @@ export function getExecutionToolDefinitions(): Array<{ name: string; description
   return [
     {
       name: 'opencode_run',
-      description: 'Execute a coding task through OpenCode AI agent. Use for implementing features, refactoring, debugging, explaining code, or any software engineering task. IMPORTANT: workingDirectory is REQUIRED - always specify the project directory.',
+      description: 'Execute a coding task through OpenCode AI agent. Use for implementing features, refactoring, debugging, explaining code, or any software engineering task. Working directory is auto-detected from project root if not specified.',
       inputSchema: {
         type: 'object',
         properties: {
           prompt: { type: 'string', description: 'The task or question for OpenCode' },
-          workingDirectory: { type: 'string', description: 'Project directory path (REQUIRED - where files will be created/modified)' },
+          workingDirectory: { type: 'string', description: 'Project directory path (auto-detected if not specified)' },
           model: { type: 'string', description: 'Model in format provider/model' },
           agent: { type: 'string', description: 'Agent to use' },
           files: { type: 'array', items: { type: 'string' }, description: 'File paths to attach' },
           noReply: { type: 'boolean', description: 'Add context without triggering AI response' },
         },
-        required: ['prompt', 'workingDirectory'],
+        required: ['prompt'],
       },
     },
     {
       name: 'opencode_session_create',
-      description: 'Create a new OpenCode session for multi-turn conversations. Returns a session ID that can be used for subsequent prompts. IMPORTANT: workingDirectory is REQUIRED.',
+      description: 'Create a new OpenCode session for multi-turn conversations. Returns a session ID that can be used for subsequent prompts. Working directory is auto-detected from project root if not specified.',
       inputSchema: {
         type: 'object',
         properties: {
-          workingDirectory: { type: 'string', description: 'Project directory path (REQUIRED)' },
+          workingDirectory: { type: 'string', description: 'Project directory path (auto-detected if not specified)' },
           title: { type: 'string', description: 'Session title' },
           model: { type: 'string', description: 'Model in format provider/model' },
         },
-        required: ['workingDirectory'],
+        required: [],
       },
     },
     {
@@ -126,40 +208,33 @@ export function getExecutionToolDefinitions(): Array<{ name: string; description
 
 export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: string) {
   return {
-    async opencode_run(params: { prompt: string; workingDirectory: string; model?: string; agent?: string; files?: string[]; noReply?: boolean }) {
+    async opencode_run(params: { prompt: string; workingDirectory?: string; model?: string; agent?: string; files?: string[]; noReply?: boolean }) {
       try {
-        // Validate working directory exists
+        // Get working directory (auto-detect if not specified)
+        let workingDir: { directory: string; source: string };
         try {
-          const dirStat = await stat(params.workingDirectory);
-          if (!dirStat.isDirectory()) {
-            return createErrorResponse(
-              'Validating working directory',
-              new Error(`${params.workingDirectory} is not a directory`),
-              [
-                'Provide a valid directory path',
-                'Use absolute paths for clarity',
-                'Example: /home/user/projects/my-project',
-              ]
-            );
-          }
+          workingDir = await getWorkingDirectory(params.workingDirectory);
         } catch (e) {
           return createErrorResponse(
-            'Validating working directory',
-            new Error(`Directory does not exist: ${params.workingDirectory}`),
+            'Detecting working directory',
+            e,
             [
-              'Create the directory first, or use an existing project directory',
-              'Use absolute paths for clarity',
-              `Error: ${e instanceof Error ? e.message : String(e)}`,
+              'Specify workingDirectory parameter explicitly',
+              'Make sure you are in a project directory with .git or package.json',
             ]
           );
         }
+        
+        console.error(`[opencode_run] Using directory: ${workingDir.directory} (source: ${workingDir.source})`);
 
-        // Create a session for this run, passing working directory
+        // Create a session for this run
         const session = await client.createSession(
           undefined,
           resolveModel(params.model, defaultModel),
-          params.workingDirectory
+          workingDir.directory
         );
+        
+        console.error(`[opencode_run] Session created: ${session.id}, directory: ${session.directory}`);
 
         // Send the prompt
         const result = await client.prompt(session.id, params.prompt, {
@@ -174,7 +249,9 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
             sessionId: result.sessionId,
             messageId: result.messageId,
             content: result.content,
-            workingDirectory: params.workingDirectory,
+            workingDirectory: workingDir.directory,
+            directorySource: workingDir.source,
+            sessionDirectory: session.directory,
           }, null, 2) }],
         };
       } catch (error) {
@@ -186,28 +263,19 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
       }
     },
 
-    async opencode_session_create(params: { workingDirectory: string; title?: string; model?: string }) {
+    async opencode_session_create(params: { workingDirectory?: string; title?: string; model?: string }) {
       try {
-        // Validate working directory exists
+        // Get working directory (auto-detect if not specified)
+        let workingDir: { directory: string; source: string };
         try {
-          const dirStat = await stat(params.workingDirectory);
-          if (!dirStat.isDirectory()) {
-            return createErrorResponse(
-              'Validating working directory',
-              new Error(`${params.workingDirectory} is not a directory`),
-              [
-                'Provide a valid directory path',
-                'Use absolute paths for clarity',
-              ]
-            );
-          }
+          workingDir = await getWorkingDirectory(params.workingDirectory);
         } catch (e) {
           return createErrorResponse(
-            'Validating working directory',
-            new Error(`Directory does not exist: ${params.workingDirectory}`),
+            'Detecting working directory',
+            e,
             [
-              'Create the directory first, or use an existing project directory',
-              `Error: ${e instanceof Error ? e.message : String(e)}`,
+              'Specify workingDirectory parameter explicitly',
+              'Make sure you are in a project directory with .git or package.json',
             ]
           );
         }
@@ -215,14 +283,16 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
         const session = await client.createSession(
           params.title,
           resolveModel(params.model, defaultModel),
-          params.workingDirectory
+          workingDir.directory
         );
 
         return {
           content: [{ type: 'text' as const, text: JSON.stringify({
             sessionId: session.id,
             title: session.title,
-            workingDirectory: params.workingDirectory,
+            workingDirectory: workingDir.directory,
+            directorySource: workingDir.source,
+            sessionDirectory: session.directory,
           }, null, 2) }],
         };
       } catch (error) {
