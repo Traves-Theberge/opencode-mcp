@@ -5,7 +5,7 @@
  * These tests verify the client wrapper works correctly.
  */
 
-import { describe, test, expect, beforeAll, vi } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 
 // Mock the OpenCode SDK for smoke tests
 vi.mock('@opencode-ai/sdk', () => ({

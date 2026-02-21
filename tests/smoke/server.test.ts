@@ -5,7 +5,7 @@
  * These tests MUST pass for any release.
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'vitest';
+import { describe, test, expect } from 'vitest';
 
 describe('Smoke Tests - Server', () => {
   describe('Server Startup', () => {

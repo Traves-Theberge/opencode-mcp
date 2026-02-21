@@ -60,6 +60,7 @@ OpenCode MCP Server works with all major AI-enabled IDEs:
 
 | IDE | Config File | Setup Guide |
 |-----|-------------|-------------|
+| [Antigravity](docs/setup-guides/antigravity.md) | `~/.config/antigravity/mcp_config.json` | [Full Guide](docs/setup-guides/antigravity.md) |
 | [Cursor](docs/setup-guides/cursor.md) | `~/.cursor/mcp.json` | [Full Guide](docs/setup-guides/cursor.md) |
 | [Windsurf](docs/setup-guides/windsurf.md) | `~/.codeium/windsurf/mcp_config.json` | [Full Guide](docs/setup-guides/windsurf.md) |
 | [Claude Desktop](docs/setup-guides/claude-desktop.md) | `~/Library/Application Support/Claude/claude_desktop_config.json` | [Full Guide](docs/setup-guides/claude-desktop.md) |
@@ -68,6 +69,24 @@ OpenCode MCP Server works with all major AI-enabled IDEs:
 | [Continue.dev](docs/setup-guides/continue.md) | `.continue/mcpServers/` | [Full Guide](docs/setup-guides/continue.md) |
 | [Zed](docs/setup-guides/zed.md) | `~/.config/zed/settings.json` | [Full Guide](docs/setup-guides/zed.md) |
 | [OpenCode](docs/setup-guides/opencode.md) | `opencode.json` | [Full Guide](docs/setup-guides/opencode.md) |
+
+### Quick Config (Antigravity)
+
+Add to `~/.config/antigravity/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "opencode": {
+      "command": "npx",
+      "args": ["-y", "@opencode-mcp/server"],
+      "env": {
+        "OPENCODE_SERVER_URL": "http://localhost:4096"
+      }
+    }
+  }
+}
+```
 
 ### Quick Config (Cursor)
 

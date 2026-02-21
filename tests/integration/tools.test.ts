@@ -71,7 +71,7 @@ describe('Tool Schemas', () => {
     });
 
     test('all annotations have required properties', () => {
-      for (const [name, annotations] of Object.entries(TOOL_ANNOTATIONS)) {
+      for (const [, annotations] of Object.entries(TOOL_ANNOTATIONS)) {
         expect(annotations).toHaveProperty('readOnlyHint');
         expect(annotations).toHaveProperty('destructiveHint');
         expect(annotations).toHaveProperty('idempotentHint');

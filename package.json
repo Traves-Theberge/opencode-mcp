@@ -31,6 +31,7 @@
     "agent",
     "coding-assistant",
     "ide",
+    "antigravity",
     "cursor",
     "claude"
   ],
@@ -55,6 +56,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.0",
@@ -64,11 +66,15 @@
     "eslint": "^10.0.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.0",
     "vitest": "^4.0.18"
   },
   "files": [
     "dist",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "overrides": {
+    "minimatch": "^10.2.1"
+  }
 }
