@@ -27,10 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tool responses now include detailed info about both API and file persistence results
 
 ### Removed
+- `opencode_file_status`: Removed (redundant - IDEs have built-in git integration)
 - Removed TUI-specific options from config tools:
   - `opencode_config_update`: Removed `theme` and `autoupdate` parameters (TUI-only)
   - `opencode_config_get`: No longer returns TUI settings (keybinds, agent definitions, etc.)
 - Removed `temperature` from examples (not a relevant model option for OpenCode)
+- Tool count reduced from 29 to 28
 
 ### Documentation
 - Updated README with hybrid config persistence feature

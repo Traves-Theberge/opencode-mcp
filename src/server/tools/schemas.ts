@@ -118,7 +118,6 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   opencode_file_search: ANNOTATIONS.readOnlyExternal,
   opencode_find_files: ANNOTATIONS.readOnlyExternal,
   opencode_find_symbols: ANNOTATIONS.readOnlyExternal,
-  opencode_file_status: ANNOTATIONS.readOnlyExternal,
 
   // Config tools - read and modify configuration
   opencode_model_list: ANNOTATIONS.readOnlyExternal,

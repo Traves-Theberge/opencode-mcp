@@ -7,13 +7,13 @@ Complete reference for all OpenCode MCP Server tools.
 | Category | Count | Tools |
 |----------|-------|-------|
 | Execution | 6 | `opencode_run`, `opencode_session_*` |
-| Files | 5 | `opencode_file_*`, `opencode_find_*` |
+| Files | 4 | `opencode_file_*`, `opencode_find_*` |
 | Config | 6 | `opencode_model_*`, `opencode_config_*`, `opencode_auth_*` |
 | Agents | 2 | `opencode_agent_*` |
 | Skills | 3 | `opencode_skill_*` |
 | MCP | 4 | `opencode_mcp_*` |
 | Tools | 3 | `opencode_tool_*`, `opencode_permission_*` |
-| **Total** | **29** | |
+| **Total** | **28** | |
 
 ---
 
@@ -37,7 +37,6 @@ All tools include MCP-compliant annotations for LLM discoverability:
 | `opencode_file_search` | ✓ | ✓ | ✓ |
 | `opencode_find_files` | ✓ | ✓ | ✓ |
 | `opencode_find_symbols` | ✓ | ✓ | ✓ |
-| `opencode_file_status` | ✓ | ✓ | ✓ |
 | `opencode_model_list` | ✓ | ✓ | ✓ |
 | `opencode_provider_list` | ✓ | ✓ | ✓ |
 | `opencode_config_get` | ✓ | ✓ | ✓ |
@@ -316,16 +315,6 @@ Find workspace symbols (functions, classes, variables).
   "query": "string (required) - Symbol name to search for"
 }
 ```
-
----
-
-### `opencode_file_status`
-
-Get git status for tracked files.
-
-**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
-
-**Input Schema**: `{}` (no parameters)
 
 ---
 

@@ -67,7 +67,7 @@ describe('Smoke Tests - Tools', () => {
       const { getFileToolDefinitions } = await import('../../src/server/tools/files.js');
       const definitions = getFileToolDefinitions();
       
-      expect(definitions.length).toBe(5);
+      expect(definitions.length).toBe(4);
       
       const readFile = definitions.find(t => t.name === 'opencode_file_read');
       expect(readFile).toBeDefined();
@@ -80,9 +80,6 @@ describe('Smoke Tests - Tools', () => {
       
       const findSymbols = definitions.find(t => t.name === 'opencode_find_symbols');
       expect(findSymbols).toBeDefined();
-      
-      const fileStatus = definitions.find(t => t.name === 'opencode_file_status');
-      expect(fileStatus).toBeDefined();
     });
 
     test('config tools have correct definitions', async () => {
@@ -182,7 +179,7 @@ describe('Smoke Tests - Tools', () => {
       const { getAllToolDefinitions } = await import('../../src/server/tools/index.js');
       const definitions = getAllToolDefinitions();
       
-      expect(definitions.length).toBe(29);
+      expect(definitions.length).toBe(28);
       
       for (const tool of definitions) {
         expect(tool.name).toBeTruthy();

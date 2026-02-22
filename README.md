@@ -134,7 +134,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for all supported IDEs.
 
-## Available Tools (29)
+## Available Tools (28)
 
 ### Execution (6)
 | Tool | Description |
@@ -146,14 +146,13 @@ See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for
 | `opencode_session_abort` | Abort a running session |
 | `opencode_session_share` | Share a session |
 
-### Files (5)
+### Files (4)
 | Tool | Description |
 |------|-------------|
 | `opencode_file_read` | Read a file from the project |
 | `opencode_file_search` | Search text in files |
 | `opencode_find_files` | Find files by name/pattern |
 | `opencode_find_symbols` | Find workspace symbols |
-| `opencode_file_status` | Get git status |
 
 ### Config (6)
 | Tool | Description |

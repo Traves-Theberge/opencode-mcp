@@ -88,11 +88,6 @@ export function getFileToolDefinitions(): Array<{ name: string; description: str
         required: ['query'],
       },
     },
-    {
-      name: 'opencode_file_status',
-      description: 'Get git status for tracked files.',
-      inputSchema: { type: 'object', properties: {} },
-    },
   ];
 }
 
@@ -162,29 +157,6 @@ export function createFileHandlers(client: OpenCodeClient) {
       } catch (error) {
         return createErrorResponse(
           `Finding symbols matching "${params.query}"`,
-          error,
-          ERROR_SUGGESTIONS.connectionFailed
-        );
-      }
-    },
-
-    async opencode_file_status(_params: { path?: string }) {
-      try {
-        // File status provides git status information
-        // Returns a note about using OpenCode's built-in bash tool for git operations
-        return {
-          content: [{ 
-            type: 'text' as const, 
-            text: JSON.stringify({
-              note: 'Use opencode_run with a git status command for detailed git status:',
-              example: 'opencode_run: "Show me the git status of the repository"',
-              alternative: 'Use the bash tool in OpenCode directly for git commands',
-            }, null, 2) 
-          }],
-        };
-      } catch (error) {
-        return createErrorResponse(
-          'Getting file status',
           error,
           ERROR_SUGGESTIONS.connectionFailed
         );

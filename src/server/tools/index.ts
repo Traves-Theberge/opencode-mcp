@@ -156,7 +156,7 @@ export async function registerAllTools(
   s.tool('opencode_session_abort', 'Abort a running OpenCode session.', execSchemas.SessionIdInputSchema, TOOL_ANNOTATIONS.opencode_session_abort, execHandlers.opencode_session_abort);
   s.tool('opencode_session_share', 'Share an OpenCode session. Returns a shareable link.', execSchemas.SessionIdInputSchema, TOOL_ANNOTATIONS.opencode_session_share, execHandlers.opencode_session_share);
 
-  // Register file tools (5 tools)
+  // Register file tools (4 tools)
   const { createFileHandlers: createFile, INPUT_SCHEMAS: fileSchemas } = await import('./files.js');
   const fileHandlers = createFile(client);
   
@@ -164,7 +164,6 @@ export async function registerAllTools(
   s.tool('opencode_file_search', 'Search for text pattern in project files. Supports regex patterns.', fileSchemas.FileSearchInputSchema, TOOL_ANNOTATIONS.opencode_file_search, fileHandlers.opencode_file_search);
   s.tool('opencode_find_files', 'Find files and directories by name pattern using fuzzy matching.', fileSchemas.FindFilesInputSchema, TOOL_ANNOTATIONS.opencode_find_files, fileHandlers.opencode_find_files);
   s.tool('opencode_find_symbols', 'Find workspace symbols (functions, classes, variables) by name.', fileSchemas.FindSymbolsInputSchema, TOOL_ANNOTATIONS.opencode_find_symbols, fileHandlers.opencode_find_symbols);
-  s.tool('opencode_file_status', 'Get git status for tracked files.', fileSchemas.EmptySchema, TOOL_ANNOTATIONS.opencode_file_status, fileHandlers.opencode_file_status);
 
   // Register config tools (6 tools)
   const { createConfigHandlers: createConfig, INPUT_SCHEMAS: configSchemas } = await import('./config.js');
