@@ -29,12 +29,12 @@ Edit the MCP configuration file directly:
 
 **macOS/Linux:**
 ```bash
-~/.config/Antigravity/mcp_config.json
+~/.gemini/antigravity/mcp_config.json
 ```
 
 **Windows:**
 ```
-%APPDATA%\Antigravity\mcp_config.json
+%USERPROFILE%\.gemini\antigravity\mcp_config.json
 ```
 
 **Configuration:**
@@ -46,12 +46,15 @@ Edit the MCP configuration file directly:
       "command": "npx",
       "args": ["-y", "@opencode-mcp/server"],
       "env": {
-        "OPENCODE_SERVER_URL": "http://localhost:4096"
+        "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project"
       }
     }
   }
 }
 ```
+
+> **Important:** Set `OPENCODE_DEFAULT_PROJECT` to your project directory. This ensures file operations work correctly.
 
 ### With Custom Model
 
@@ -63,6 +66,7 @@ Edit the MCP configuration file directly:
       "args": ["-y", "@opencode-mcp/server"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project",
         "OPENCODE_DEFAULT_MODEL": "anthropic/claude-sonnet-4"
       }
     }
@@ -80,6 +84,7 @@ Edit the MCP configuration file directly:
       "args": ["-y", "@opencode-mcp/server"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project",
         "OPENCODE_LOG_LEVEL": "debug"
       }
     }
@@ -188,16 +193,16 @@ opencode serve
 
 ```bash
 # Ensure your user has access to the config directory
-sudo chown -R $USER:$USER ~/.config/antigravity
+sudo chown -R $USER:$USER ~/.gemini/antigravity
 ```
 
 ## Config File Location
 
 | OS | Path |
 |----|------|
-| macOS | `~/.config/antigravity/mcp_config.json` |
-| Linux | `~/.config/antigravity/mcp_config.json` |
-| Windows | `%APPDATA%\antigravity\mcp_config.json` |
+| macOS | `~/.gemini/antigravity/mcp_config.json` |
+| Linux | `~/.gemini/antigravity/mcp_config.json` |
+| Windows | `%USERPROFILE%\.gemini\antigravity\mcp_config.json` |
 
 ## Full Example
 
@@ -209,6 +214,7 @@ sudo chown -R $USER:$USER ~/.config/antigravity
       "args": ["-y", "@opencode-mcp/server"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project",
         "OPENCODE_AUTO_START": "true",
         "OPENCODE_TIMEOUT": "120000",
         "OPENCODE_LOG_LEVEL": "info"

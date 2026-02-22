@@ -5,6 +5,24 @@ All notable changes to the OpenCode MCP Server project will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-02-22
+
+### Fixed
+- **Project Directory Handling**: Files are now created in the correct project directory
+  - Added `OPENCODE_DEFAULT_PROJECT` environment variable support
+  - Directory is now set at SDK client level (not just session level)
+  - This fixes the issue where files were created in MCP server directory instead of project
+
+### Added
+- **Project Directory Auto-Detection**: Automatically finds project root by searching for `.git`, `package.json`, etc.
+- **Directory Source Reporting**: Tool responses now show where the directory came from (`explicit`, `env`, `detected`, `fallback`)
+- **Session Directory Logging**: Debug logs show requested vs actual session directory
+
+### Changed
+- `workingDirectory` parameter is now optional (auto-detected if not specified)
+- Updated MCP config examples to include `OPENCODE_DEFAULT_PROJECT`
+- Improved Antigravity setup guide with correct config path (`~/.gemini/antigravity/mcp_config.json`)
+
 ## [0.2.0] - 2025-02-21
 
 ### Added

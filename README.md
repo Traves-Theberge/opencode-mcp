@@ -60,7 +60,7 @@ OpenCode MCP Server works with all major AI-enabled IDEs:
 
 | IDE | Config File | Setup Guide |
 |-----|-------------|-------------|
-| [Antigravity](docs/setup-guides/antigravity.md) | `~/.config/antigravity/mcp_config.json` | [Full Guide](docs/setup-guides/antigravity.md) |
+| [Antigravity](docs/setup-guides/antigravity.md) | `~/.gemini/antigravity/mcp_config.json` | [Full Guide](docs/setup-guides/antigravity.md) |
 | [Cursor](docs/setup-guides/cursor.md) | `~/.cursor/mcp.json` | [Full Guide](docs/setup-guides/cursor.md) |
 | [Windsurf](docs/setup-guides/windsurf.md) | `~/.codeium/windsurf/mcp_config.json` | [Full Guide](docs/setup-guides/windsurf.md) |
 | [Claude Desktop](docs/setup-guides/claude-desktop.md) | `~/Library/Application Support/Claude/claude_desktop_config.json` | [Full Guide](docs/setup-guides/claude-desktop.md) |
@@ -72,7 +72,7 @@ OpenCode MCP Server works with all major AI-enabled IDEs:
 
 ### Quick Config (Antigravity)
 
-Add to `~/.config/antigravity/mcp_config.json`:
+Add to `~/.gemini/antigravity/mcp_config.json`:
 
 ```json
 {
@@ -81,12 +81,15 @@ Add to `~/.config/antigravity/mcp_config.json`:
       "command": "npx",
       "args": ["-y", "@opencode-mcp/server"],
       "env": {
-        "OPENCODE_SERVER_URL": "http://localhost:4096"
+        "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project"
       }
     }
   }
 }
 ```
+
+> **Note:** `OPENCODE_DEFAULT_PROJECT` is required for file operations to work correctly. Set it to your project directory.
 
 ### Quick Config (Cursor)
 
@@ -99,7 +102,8 @@ Add to `~/.cursor/mcp.json`:
       "command": "npx",
       "args": ["-y", "@opencode-mcp/server"],
       "env": {
-        "OPENCODE_SERVER_URL": "http://localhost:4096"
+        "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project"
       }
     }
   }
@@ -117,7 +121,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
       "command": "npx",
       "args": ["-y", "@opencode-mcp/server"],
       "env": {
-        "OPENCODE_SERVER_URL": "http://localhost:4096"
+        "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project"
       }
     }
   }
