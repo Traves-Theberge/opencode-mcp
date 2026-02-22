@@ -133,25 +133,36 @@ export function createConfigHandlers(client: OpenCodeClient) {
       try {
         const { providers, defaults } = await client.listProviders();
         
-        const typedProviders = providers as ProviderData[];
+        // Log raw response for debugging
+        console.error(`[model_list] Providers response:`, JSON.stringify(providers, null, 2).slice(0, 500));
         
-        let filteredProviders = typedProviders;
-        if (params.provider) {
-          filteredProviders = typedProviders.filter((p: ProviderData) => p.id === params.provider);
-        }
-
-        const output = filteredProviders.map((provider: ProviderData) => ({
-          provider: provider.id,
-          name: provider.name,
-          models: provider.models.map((m: { id: string; name: string }) => ({
-            id: m.id,
-            name: m.name,
-            default: defaults[provider.id] === m.id,
-          })),
-        }));
+        // Handle different response formats safely
+        const output = (providers as ProviderData[]).map((provider: ProviderData) => {
+          // Safely handle models - might be undefined, object, or array
+          let models: Array<{ id: string; name: string; default: boolean }> = [];
+          
+          if (provider.models && Array.isArray(provider.models)) {
+            models = provider.models.map((m: { id: string; name?: string }) => ({
+              id: m.id,
+              name: m.name ?? m.id,
+              default: defaults[provider.id] === m.id,
+            }));
+          }
+          
+          return {
+            provider: provider.id,
+            name: provider.name ?? provider.id,
+            models,
+          };
+        });
+        
+        // Filter if provider specified
+        const filteredOutput = params.provider 
+          ? output.filter(p => p.provider === params.provider)
+          : output;
 
         return {
-          content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(filteredOutput, null, 2) }],
         };
       } catch (error) {
         return createErrorResponse(
