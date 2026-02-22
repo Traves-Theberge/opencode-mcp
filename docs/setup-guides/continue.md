@@ -156,7 +156,7 @@ your-project/
 cat .continue/mcpServers/opencode.yaml
 
 # Test server manually
-npx @opencode-mcp/server
+node /path/to/opencode-mcp/dist/index.js
 ```
 
 ### No Tools Available

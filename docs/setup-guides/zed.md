@@ -163,7 +163,7 @@ You can also configure MCP servers per-project in `.zed/settings.json`:
 cat ~/.config/zed/settings.json | python -m json.tool
 
 # Test server manually
-npx @opencode-mcp/server
+node /path/to/opencode-mcp/dist/index.js
 ```
 
 ### Trust Issues

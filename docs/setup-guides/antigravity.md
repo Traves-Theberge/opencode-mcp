@@ -43,8 +43,8 @@ Edit the MCP configuration file directly:
 {
   "mcpServers": {
     "opencode": {
-      "command": "npx",
-      "args": ["-y", "@opencode-mcp/server"],
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
         "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project"
@@ -54,7 +54,9 @@ Edit the MCP configuration file directly:
 }
 ```
 
-> **Important:** Set `OPENCODE_DEFAULT_PROJECT` to your project directory. This ensures file operations work correctly.
+> **Important:** 
+> - Replace `/path/to/opencode-mcp` with the actual path where you cloned the repository
+> - Set `OPENCODE_DEFAULT_PROJECT` to your project directory. This ensures file operations work correctly.
 
 ### With Custom Model
 
@@ -62,8 +64,8 @@ Edit the MCP configuration file directly:
 {
   "mcpServers": {
     "opencode": {
-      "command": "npx",
-      "args": ["-y", "@opencode-mcp/server"],
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
         "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project",
@@ -80,8 +82,8 @@ Edit the MCP configuration file directly:
 {
   "mcpServers": {
     "opencode": {
-      "command": "npx",
-      "args": ["-y", "@opencode-mcp/server"],
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
         "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project",
@@ -165,8 +167,13 @@ Use opencode_run to create a React component, then use the browser to test it
 ### Server Not Starting
 
 ```bash
-# Check if the server starts manually
-npx @opencode-mcp/server
+# Make sure you've built the server
+cd /path/to/opencode-mcp
+npm install
+npm run build
+
+# Verify the build exists
+ls dist/index.js
 
 # Check Node.js version
 node --version  # Should be 18+
@@ -210,8 +217,8 @@ sudo chown -R $USER:$USER ~/.gemini/antigravity
 {
   "mcpServers": {
     "opencode": {
-      "command": "npx",
-      "args": ["-y", "@opencode-mcp/server"],
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
         "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project",
@@ -223,6 +230,8 @@ sudo chown -R $USER:$USER ~/.gemini/antigravity
   }
 }
 ```
+
+> Replace `/path/to/opencode-mcp` with the actual path where you cloned the repository.
 
 ## Resources
 

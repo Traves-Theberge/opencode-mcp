@@ -40,12 +40,13 @@ OpenCode MCP Server allows any MCP-compatible client (Cursor, Windsurf, Claude D
 ### Installation
 
 ```bash
-# Using npx (recommended)
-npx @opencode-mcp/server
+# Clone the repository
+git clone https://github.com/Traves-Theberge/opencode-mcp.git
+cd opencode-mcp
 
-# Or install globally
-npm install -g @opencode-mcp/server
-opencode-mcp
+# Install dependencies and build
+npm install
+npm run build
 ```
 
 ### Prerequisites
@@ -53,6 +54,7 @@ opencode-mcp
 1. **OpenCode installed**: [Install OpenCode](https://opencode.ai/docs/#install)
 2. **OpenCode server running**: Start with `opencode serve` or the TUI
 3. **API keys configured**: Set up your LLM provider keys in OpenCode
+4. **This MCP server built**: Run `npm run build` in the project directory
 
 ### Configure in Your IDE
 
@@ -78,8 +80,8 @@ Add to `~/.gemini/antigravity/mcp_config.json`:
 {
   "mcpServers": {
     "opencode": {
-      "command": "npx",
-      "args": ["-y", "@opencode-mcp/server"],
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
         "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project"
@@ -89,7 +91,7 @@ Add to `~/.gemini/antigravity/mcp_config.json`:
 }
 ```
 
-> **Note:** `OPENCODE_DEFAULT_PROJECT` is required for file operations to work correctly. Set it to your project directory.
+> **Note:** Replace `/path/to/opencode-mcp` with the actual path where you cloned the repository.
 
 ### Quick Config (Cursor)
 
@@ -99,8 +101,8 @@ Add to `~/.cursor/mcp.json`:
 {
   "mcpServers": {
     "opencode": {
-      "command": "npx",
-      "args": ["-y", "@opencode-mcp/server"],
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
         "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project"
@@ -118,8 +120,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "opencode": {
-      "command": "npx",
-      "args": ["-y", "@opencode-mcp/server"],
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
         "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project"

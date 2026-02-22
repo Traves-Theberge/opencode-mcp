@@ -112,7 +112,7 @@ Use opencode_agent_delegate to have the plan agent review the auth module
 
 ```bash
 # Check if the server starts manually
-npx @opencode-mcp/server
+node /path/to/opencode-mcp/dist/index.js
 
 # Check Node.js version
 node --version  # Should be 18+

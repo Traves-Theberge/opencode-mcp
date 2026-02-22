@@ -195,7 +195,7 @@ If you see "too many tools" error:
 curl http://localhost:4096/health
 
 # Test MCP server manually
-npx @opencode-mcp/server
+node /path/to/opencode-mcp/dist/index.js
 ```
 
 ## Config File Location

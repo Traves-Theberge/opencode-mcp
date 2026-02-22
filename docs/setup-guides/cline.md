@@ -176,7 +176,7 @@ Use opencode_agent_delegate to have the plan agent review the code
 ps aux | grep opencode-mcp
 
 # Test server manually
-npx @opencode-mcp/server
+node /path/to/opencode-mcp/dist/index.js
 ```
 
 ### Tools Not Available

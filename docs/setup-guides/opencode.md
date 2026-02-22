@@ -27,7 +27,7 @@ Add to your `opencode.json` configuration file:
   "mcp": {
     "opencode": {
       "type": "local",
-      "command": ["npx", "-y", "@opencode-mcp/server"],
+      "command": ["node", "/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096"
       },
@@ -60,7 +60,7 @@ Then in the TUI, use `/mcp` command to manage servers.
   "mcp": {
     "opencode": {
       "type": "local",
-      "command": ["npx", "-y", "@opencode-mcp/server"],
+      "command": ["node", "/path/to/opencode-mcp/dist/index.js"],
       "enabled": true
     }
   }
@@ -74,7 +74,7 @@ Then in the TUI, use `/mcp` command to manage servers.
   "mcp": {
     "opencode": {
       "type": "local",
-      "command": ["npx", "-y", "@opencode-mcp/server"],
+      "command": ["node", "/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
         "OPENCODE_DEFAULT_MODEL": "anthropic/claude-sonnet-4"
@@ -127,7 +127,7 @@ To use HTTP transport, start the MCP server separately:
 opencode serve --port 4096
 
 # Start OpenCode MCP server (HTTP mode)
-MCP_TRANSPORT=http MCP_HTTP_PORT=3000 npx @opencode-mcp/server
+MCP_TRANSPORT=http MCP_HTTP_PORT=3000 node /path/to/opencode-mcp/dist/index.js
 ```
 
 Or with environment variables:
@@ -136,7 +136,7 @@ Or with environment variables:
 export OPENCODE_SERVER_URL=http://localhost:4096
 export MCP_TRANSPORT=http
 export MCP_HTTP_PORT=3000
-npx @opencode-mcp/server
+node /path/to/opencode-mcp/dist/index.js
 ```
 
 ## Usage in OpenCode
@@ -177,7 +177,7 @@ Control which tools are available:
   "mcp": {
     "opencode": {
       "type": "local",
-      "command": ["npx", "-y", "@opencode-mcp/server"],
+      "command": ["node", "/path/to/opencode-mcp/dist/index.js"],
       "enabled": true
     }
   },
@@ -206,7 +206,7 @@ Control which tools are available:
 curl http://localhost:4096/health
 
 # Check MCP server starts
-npx @opencode-mcp/server
+node /path/to/opencode-mcp/dist/index.js
 ```
 
 ### Tools Not Available
@@ -222,7 +222,7 @@ npx @opencode-mcp/server
 opencode serve --port 4097
 
 # Update MCP config
-OPENCODE_SERVER_URL=http://localhost:4097 npx @opencode-mcp/server
+OPENCODE_SERVER_URL=http://localhost:4097 node /path/to/opencode-mcp/dist/index.js
 ```
 
 ## Config File Locations
@@ -241,7 +241,7 @@ OPENCODE_SERVER_URL=http://localhost:4097 npx @opencode-mcp/server
   "mcp": {
     "opencode": {
       "type": "local",
-      "command": ["npx", "-y", "@opencode-mcp/server"],
+      "command": ["node", "/path/to/opencode-mcp/dist/index.js"],
       "env": {
         "OPENCODE_SERVER_URL": "http://localhost:4096",
         "OPENCODE_DEFAULT_MODEL": "anthropic/claude-sonnet-4"

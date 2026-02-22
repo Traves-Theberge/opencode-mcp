@@ -133,7 +133,7 @@ Use opencode_file_search to find all uses of deprecated functions
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | python -m json.tool
 
 # Test MCP server directly
-npx @opencode-mcp/server
+node /path/to/opencode-mcp/dist/index.js
 ```
 
 ### No Tools Appearing

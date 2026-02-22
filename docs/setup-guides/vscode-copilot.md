@@ -170,7 +170,7 @@ Cmd+Shift+P → MCP: List Servers
 
 ```bash
 # Test command manually
-npx @opencode-mcp/server
+node /path/to/opencode-mcp/dist/index.js
 
 # Check Node version
 node --version  # Should be 18+
