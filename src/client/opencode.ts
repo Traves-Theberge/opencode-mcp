@@ -105,8 +105,15 @@ function validateWithSchema<T>(
 // ============================================================================
 
 export async function createClient(config: ServerConfig): Promise<OpenCodeClient> {
+  // Check for default project directory from env
+  const defaultDirectory = process.env.OPENCODE_DEFAULT_PROJECT;
+  
+  console.error(`[createClient] Server URL: ${config.serverUrl}`);
+  console.error(`[createClient] Default directory: ${defaultDirectory ?? 'not set'}`);
+  
   const client = createOpencodeClient({
     baseUrl: config.serverUrl,
+    directory: defaultDirectory,
   });
 
   let connected = false;
@@ -173,13 +180,17 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
   ): Promise<{ id: string; title?: string; directory?: string }> {
     await ensureConnected();
     
+    // Use provided directory or default from env
+    const effectiveDirectory = directory ?? process.env.OPENCODE_DEFAULT_PROJECT;
+    
     // Debug logging
-    console.error(`[createSession] Creating session with directory: ${directory ?? 'not specified'}`);
+    console.error(`[createSession] Requested directory: ${directory ?? 'not specified'}`);
+    console.error(`[createSession] Effective directory: ${effectiveDirectory ?? 'not specified'}`);
     
     const result = await withTimeout(
       () => client.session.create({ 
         body: { title },
-        query: directory ? { directory } : undefined,
+        query: effectiveDirectory ? { directory: effectiveDirectory } : undefined,
       }),
       'Create session'
     );
@@ -187,7 +198,6 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     const session = validateWithSchema(result.data, SessionSchema, 'createSession');
     
     // Log what we got back
-    console.error(`[createSession] Requested directory: ${directory ?? 'not specified'}`);
     console.error(`[createSession] Session response:`, JSON.stringify(session, null, 2));
     
     return { 
