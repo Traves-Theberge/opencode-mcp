@@ -62,8 +62,8 @@ async function getWorkingDirectory(explicitDir?: string): Promise<{ directory: s
       if (dirStat.isDirectory()) {
         return { directory: explicitDir, source: 'explicit' };
       }
-    } catch (e) {
-      throw new Error(`Specified directory does not exist: ${explicitDir}`);
+    } catch (error) {
+      throw new Error(`Specified directory does not exist: ${explicitDir}`, { cause: error });
     }
   }
   
@@ -75,7 +75,7 @@ async function getWorkingDirectory(explicitDir?: string): Promise<{ directory: s
       if (dirStat.isDirectory()) {
         return { directory: envProject, source: 'env' };
       }
-    } catch (e) {
+    } catch {
       console.error(`[getWorkingDirectory] OPENCODE_DEFAULT_PROJECT directory does not exist: ${envProject}`);
     }
   }
