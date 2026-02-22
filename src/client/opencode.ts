@@ -62,7 +62,7 @@ export interface OpenCodeClient {
   createSession(title?: string, model?: { providerID: string; modelID: string }, directory?: string): Promise<{ id: string; title?: string; directory?: string }>;
   getSession(id: string): Promise<unknown>;
   abortSession(id: string): Promise<boolean>;
-  shareSession(id: string): Promise<{ id: string; shareToken?: string }>;
+  shareSession(id: string): Promise<{ id: string; shareUrl?: string }>;
   prompt(sessionId: string, promptText: string, options?: PromptOptions): Promise<{ sessionId: string; messageId: string; content: string }>;
   listAgents(): Promise<unknown[]>;
   listProviders(): Promise<{ providers: unknown[]; defaults: Record<string, string> }>;
@@ -225,16 +225,22 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     return result.data === true;
   }
 
-  async function shareSession(id: string): Promise<{ id: string; shareToken?: string }> {
+  async function shareSession(id: string): Promise<{ id: string; shareUrl?: string }> {
     await ensureConnected();
     const result = await withTimeout(
       () => client.session.share({ path: { id } }),
       'Share session'
     );
     const data = result.data;
+    
+    console.error(`[shareSession] Response:`, JSON.stringify(data, null, 2));
+    
+    // The share URL is in share.url
+    const shareUrl = (data as { share?: { url?: string } })?.share?.url;
+    
     return { 
       id: data?.id ?? '', 
-      shareToken: (data as { shareToken?: string })?.shareToken 
+      shareUrl 
     };
   }
 

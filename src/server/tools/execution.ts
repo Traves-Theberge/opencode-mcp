@@ -366,7 +366,7 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
         const session = await client.shareSession(params.sessionId);
         return {
           content: [{ type: 'text' as const, text: JSON.stringify({
-            shareUrl: `https://opencode.ai/s/${session.shareToken}`,
+            shareUrl: session.shareUrl,
           }, null, 2) }],
         };
       } catch (error) {
