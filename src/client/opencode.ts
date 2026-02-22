@@ -67,6 +67,7 @@ export interface OpenCodeClient {
   listAgents(): Promise<unknown[]>;
   listProviders(): Promise<{ providers: unknown[]; defaults: Record<string, string> }>;
   updateConfig(config: Record<string, unknown>): Promise<unknown>;
+  getConfig(): Promise<unknown>;
   readFile(path: string): Promise<{ content: string }>;
   searchText(pattern: string, directory?: string): Promise<unknown[]>;
   findFiles(query: string, type?: 'file' | 'directory', limit?: number): Promise<string[]>;
@@ -324,6 +325,15 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     return result.data;
   }
 
+  async function getConfig(): Promise<unknown> {
+    await ensureConnected();
+    const result = await withTimeout(
+      () => client.config.get(),
+      'Get config'
+    );
+    return result.data;
+  }
+
   async function readFile(path: string): Promise<{ content: string }> {
     await ensureConnected();
     const result = await withTimeout(
@@ -401,6 +411,7 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     listAgents,
     listProviders,
     updateConfig,
+    getConfig,
     readFile,
     searchText,
     findFiles,

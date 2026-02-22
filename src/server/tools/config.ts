@@ -258,22 +258,26 @@ export function createConfigHandlers(client: OpenCodeClient) {
 
     async opencode_config_get() {
       try {
-        const config = {
-          serverUrl: process.env.OPENCODE_SERVER_URL || 'http://localhost:4096',
-          autoStart: process.env.OPENCODE_AUTO_START !== 'false',
-          timeout: parseInt(process.env.OPENCODE_TIMEOUT || '120000', 10),
-          defaultModel: process.env.OPENCODE_DEFAULT_MODEL,
-          transport: process.env.MCP_TRANSPORT || 'stdio',
-        };
-
+        // Get the actual OpenCode config from the server
+        const openCodeConfig = await client.getConfig();
+        
         return {
-          content: [{ type: 'text' as const, text: JSON.stringify(config, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify({
+            mcpServer: {
+              serverUrl: process.env.OPENCODE_SERVER_URL || 'http://localhost:4096',
+              autoStart: process.env.OPENCODE_AUTO_START !== 'false',
+              timeout: parseInt(process.env.OPENCODE_TIMEOUT || '120000', 10),
+              transport: process.env.MCP_TRANSPORT || 'stdio',
+              defaultProject: process.env.OPENCODE_DEFAULT_PROJECT,
+            },
+            openCode: openCodeConfig,
+          }, null, 2) }],
         };
       } catch (error) {
         return createErrorResponse(
           'Getting configuration',
           error,
-          ERROR_SUGGESTIONS.invalidInput
+          ERROR_SUGGESTIONS.connectionFailed
         );
       }
     },
