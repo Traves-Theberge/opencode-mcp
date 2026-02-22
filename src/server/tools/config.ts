@@ -120,7 +120,7 @@ export function getConfigToolDefinitions(): Array<{ name: string; description: s
 interface ProviderData {
   id: string;
   name: string;
-  models: Array<{ id: string; name: string }>;
+  models?: Array<{ id: string; name?: string }> | Record<string, { id?: string; name?: string }>;
 }
 
 // ============================================================================
@@ -134,19 +134,30 @@ export function createConfigHandlers(client: OpenCodeClient) {
         const { providers, defaults } = await client.listProviders();
         
         // Log raw response for debugging
-        console.error(`[model_list] Providers response:`, JSON.stringify(providers, null, 2).slice(0, 500));
+        console.error(`[model_list] Providers response:`, JSON.stringify(providers, null, 2).slice(0, 1000));
         
         // Handle different response formats safely
+        // models can be: undefined, array, or object (dictionary)
         const output = (providers as ProviderData[]).map((provider: ProviderData) => {
-          // Safely handle models - might be undefined, object, or array
           let models: Array<{ id: string; name: string; default: boolean }> = [];
           
-          if (provider.models && Array.isArray(provider.models)) {
-            models = provider.models.map((m: { id: string; name?: string }) => ({
-              id: m.id,
-              name: m.name ?? m.id,
-              default: defaults[provider.id] === m.id,
-            }));
+          if (provider.models) {
+            if (Array.isArray(provider.models)) {
+              // Handle array format
+              models = provider.models.map((m: { id: string; name?: string }) => ({
+                id: m.id,
+                name: m.name ?? m.id,
+                default: defaults[provider.id] === m.id,
+              }));
+            } else if (typeof provider.models === 'object') {
+              // Handle object/dictionary format: { "gpt-4": { name: "GPT-4", ... }, ... }
+              const modelsObj = provider.models as Record<string, { id?: string; name?: string }>;
+              models = Object.entries(modelsObj).map(([modelId, modelData]) => ({
+                id: modelId,
+                name: modelData?.name ?? modelId,
+                default: defaults[provider.id] === modelId,
+              }));
+            }
           }
           
           return {
@@ -219,12 +230,21 @@ export function createConfigHandlers(client: OpenCodeClient) {
         
         const typedProviders = providers as ProviderData[];
         
-        const output = typedProviders.map((provider: ProviderData) => ({
-          id: provider.id,
-          name: provider.name,
-          modelCount: provider.models.length,
-          defaultModel: defaults[provider.id],
-        }));
+        const output = typedProviders.map((provider: ProviderData) => {
+          let modelCount = 0;
+          if (provider.models) {
+            modelCount = Array.isArray(provider.models) 
+              ? provider.models.length 
+              : Object.keys(provider.models).length;
+          }
+          
+          return {
+            id: provider.id,
+            name: provider.name,
+            modelCount,
+            defaultModel: defaults[provider.id],
+          };
+        });
 
         return {
           content: [{ type: 'text' as const, text: JSON.stringify(output, null, 2) }],
