@@ -171,10 +171,10 @@ export async function registerAllTools(
   const configHandlers = createConfig(client);
   
   s.tool('opencode_model_list', 'List all available models from configured providers. Optionally filter by provider or refresh the cache.', configSchemas.ModelListInputSchema, TOOL_ANNOTATIONS.opencode_model_list, configHandlers.opencode_model_list);
-  s.tool('opencode_model_configure', 'Configure model options (temperature, reasoning effort, thinking budget, etc.). Returns configuration instructions.', configSchemas.ModelConfigureInputSchema, TOOL_ANNOTATIONS.opencode_model_configure, configHandlers.opencode_model_configure);
+  s.tool('opencode_model_configure', 'Configure model options (reasoningEffort, maxTokens, thinking, etc.). Updates both runtime config and persists to opencode.json.', configSchemas.ModelConfigureInputSchema, TOOL_ANNOTATIONS.opencode_model_configure, configHandlers.opencode_model_configure);
   s.tool('opencode_provider_list', 'List all providers and their connection status.', configSchemas.EmptySchema, TOOL_ANNOTATIONS.opencode_provider_list, configHandlers.opencode_provider_list);
   s.tool('opencode_config_get', 'Get current OpenCode MCP server configuration.', configSchemas.EmptySchema, TOOL_ANNOTATIONS.opencode_config_get, configHandlers.opencode_config_get);
-  s.tool('opencode_config_update', 'Update OpenCode configuration settings. Returns configuration instructions to apply manually.', configSchemas.ConfigUpdateInputSchema, TOOL_ANNOTATIONS.opencode_config_update, configHandlers.opencode_config_update);
+  s.tool('opencode_config_update', 'Update OpenCode configuration settings. Updates both runtime config and persists to opencode.json.', configSchemas.ConfigUpdateInputSchema, TOOL_ANNOTATIONS.opencode_config_update, configHandlers.opencode_config_update);
   s.tool('opencode_auth_set', 'Set authentication credentials for a provider. Supports API keys and OAuth tokens.', configSchemas.AuthSetInputSchema, TOOL_ANNOTATIONS.opencode_auth_set, configHandlers.opencode_auth_set);
 
   // Register agent tools (2 tools)

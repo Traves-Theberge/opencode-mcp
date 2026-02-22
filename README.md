@@ -24,6 +24,7 @@ OpenCode MCP Server allows any MCP-compatible client (Cursor, Windsurf, Claude D
 
 - **Full OpenCode Integration**: Access all OpenCode capabilities via MCP tools
 - **29 Tools**: Complete toolset for coding, config, agents, skills, and MCP management
+- **Hybrid Config Persistence**: Config changes apply immediately AND persist to `opencode.json`
 - **Tool Annotations**: MCP-compliant annotations for better LLM discoverability
 - **Dual Transport**: stdio (local) and HTTP (remote) with stateless/stateful modes
 - **Type-Safe**: Full TypeScript support with Zod v4 validation
@@ -259,11 +260,29 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=3000 npx @opencode-mcp/server
 | `OPENCODE_DEFAULT_MODEL` | - | Default model |
 | `OPENCODE_TIMEOUT` | `120000` | Request timeout in ms |
 | `OPENCODE_DEFAULT_PROJECT` | - | Default project directory (used when workingDirectory not specified) |
+| `OPENCODE_CONFIG_PATH` | auto-detected | Path to opencode.json for config persistence |
 | `OPENCODE_LOG_LEVEL` | `info` | Log level (debug, info, warn, error, none) |
 | `OPENCODE_LOG_TIMESTAMP` | `false` | Include timestamps in logs |
 | `MCP_TRANSPORT` | `stdio` | Transport mode (stdio or http) |
 | `MCP_HTTP_PORT` | `3000` | HTTP port |
 | `MCP_CORS_ORIGINS` | `*` | CORS origins (comma-separated, restrict in production) |
+
+## Config Persistence
+
+Config tools (`opencode_model_configure`, `opencode_config_update`) use a **hybrid approach**:
+
+1. **API Update** - Changes apply immediately to the running OpenCode server
+2. **File Persistence** - Changes are saved to `opencode.json` for persistence across restarts
+
+### Config Path Detection
+
+The config file location is auto-detected in this priority:
+
+1. **`OPENCODE_CONFIG_PATH`** environment variable (explicit override)
+2. **Project local**: `{workingDirectory}/.opencode/opencode.json`
+3. **Global**: `~/.config/opencode/opencode.json`
+
+Changes are deep-merged with existing config, preserving other settings.
 
 ## Project Directory Detection
 

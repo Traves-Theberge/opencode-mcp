@@ -5,6 +5,39 @@ All notable changes to the OpenCode MCP Server project will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2025-02-22
+
+### Added
+- **Hybrid Config Persistence**: Config tools now use a hybrid approach for updates
+  - API update for immediate runtime effect
+  - File persistence to `opencode.json` for changes that survive server restart
+  - Deep merge preserves existing config when adding new settings
+- **Config Path Auto-Detection**: Automatically finds the correct `opencode.json` location
+  - Priority: `OPENCODE_CONFIG_PATH` env > project local > global
+  - Project local: `{workingDirectory}/.opencode/opencode.json`
+  - Global: `~/.config/opencode/opencode.json`
+- **New Environment Variable**: `OPENCODE_CONFIG_PATH` for explicit config file path override
+
+### Changed
+- `opencode_model_configure`: Now persists model options to both runtime and config file
+- `opencode_config_update`: Now persists settings to both runtime and config file
+- `opencode_config_get`: Now reads from config file (API doesn't return model/provider settings)
+  - Returns only MCP-relevant config (no TUI keybinds, agent prompts, etc.)
+  - Filters to: `model`, `small_model`, `default_agent`, `provider`
+- Tool responses now include detailed info about both API and file persistence results
+
+### Removed
+- Removed TUI-specific options from config tools:
+  - `opencode_config_update`: Removed `theme` and `autoupdate` parameters (TUI-only)
+  - `opencode_config_get`: No longer returns TUI settings (keybinds, agent definitions, etc.)
+- Removed `temperature` from examples (not a relevant model option for OpenCode)
+
+### Documentation
+- Updated README with hybrid config persistence feature
+- Updated environment variables table with `OPENCODE_CONFIG_PATH`
+- Added config path detection section
+- Updated API docs for config tools with new response formats
+
 ## [0.2.1] - 2025-02-22
 
 ### Fixed

@@ -2,11 +2,17 @@
  * Config Tools
  * 
  * Tools for configuration and model management through OpenCode.
+ * Uses hybrid approach: API update for immediate effect + file persistence.
  */
 
 import { z } from 'zod';
 import type { OpenCodeClient } from '../../client/opencode.js';
 import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
+import { 
+  detectConfigPath, 
+  readOpenCodeConfig,
+  writeOpenCodeConfig 
+} from '../../utils/config.js';
 
 // ============================================================================
 // Input Schemas (exported for MCP SDK)
@@ -21,14 +27,12 @@ export const INPUT_SCHEMAS = {
   ModelConfigureInputSchema: {
     provider: z.string().min(1, { error: 'Provider ID is required' }).describe('Provider ID'),
     model: z.string().min(1, { error: 'Model ID is required' }).describe('Model ID'),
-    options: z.record(z.string(), z.unknown()).describe('Model options (temperature, reasoningEffort, etc.)'),
+    options: z.record(z.string(), z.unknown()).describe('Model options (reasoningEffort, maxTokens, thinking, etc.)'),
   },
   
   ConfigUpdateInputSchema: {
     model: z.string().optional().describe('Default model (provider/model format)'),
     smallModel: z.string().optional().describe('Small model for lightweight tasks'),
-    autoupdate: z.boolean().optional().describe('Auto-update setting'),
-    theme: z.string().optional().describe('Theme name'),
     defaultAgent: z.string().optional().describe('Default agent name'),
   },
   
@@ -61,7 +65,7 @@ export function getConfigToolDefinitions(): Array<{ name: string; description: s
     },
     {
       name: 'opencode_model_configure',
-      description: 'Configure model options (temperature, reasoning effort, thinking budget, etc.).',
+      description: 'Configure model options (reasoningEffort, maxTokens, thinking, etc.). Updates both runtime config and persists to opencode.json.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -84,14 +88,12 @@ export function getConfigToolDefinitions(): Array<{ name: string; description: s
     },
     {
       name: 'opencode_config_update',
-      description: 'Update OpenCode configuration settings.',
+      description: 'Update OpenCode configuration settings. Updates both runtime config and persists to opencode.json.',
       inputSchema: {
         type: 'object',
         properties: {
           model: { type: 'string' },
           smallModel: { type: 'string' },
-          autoupdate: { type: 'boolean' },
-          theme: { type: 'string' },
           defaultAgent: { type: 'string' },
         },
       },
@@ -187,7 +189,7 @@ export function createConfigHandlers(client: OpenCodeClient) {
     async opencode_model_configure(params: { provider: string; model: string; options: Record<string, unknown> }) {
       try {
         // Build the config update
-        const config = {
+        const configUpdate = {
           provider: {
             [params.provider]: {
               models: {
@@ -199,8 +201,16 @@ export function createConfigHandlers(client: OpenCodeClient) {
           },
         };
         
-        // Actually update the config via SDK
-        const result = await client.updateConfig(config);
+        // 1. Update runtime config via API (immediate effect)
+        const apiResult = await client.updateConfig(configUpdate);
+        
+        // 2. Persist to opencode.json file
+        const configPath = detectConfigPath(process.env.OPENCODE_DEFAULT_PROJECT);
+        let persistResult: { success: boolean; error?: string } = { success: false, error: 'Config path not detected' };
+        
+        if (configPath) {
+          persistResult = writeOpenCodeConfig(configPath, configUpdate);
+        }
         
         return {
           content: [{ 
@@ -208,8 +218,18 @@ export function createConfigHandlers(client: OpenCodeClient) {
             text: JSON.stringify({
               success: true,
               message: `Model ${params.model} configured for provider ${params.provider}`,
+              provider: params.provider,
+              model: params.model,
               options: params.options,
-              result,
+              api: {
+                updated: true,
+                result: apiResult,
+              },
+              file: {
+                path: configPath,
+                persisted: persistResult.success,
+                error: persistResult.error,
+              },
             }, null, 2) 
           }],
         };
@@ -258,8 +278,22 @@ export function createConfigHandlers(client: OpenCodeClient) {
 
     async opencode_config_get() {
       try {
-        // Get the actual OpenCode config from the server
-        const openCodeConfig = await client.getConfig();
+        // Detect config file path
+        const configPath = detectConfigPath(process.env.OPENCODE_DEFAULT_PROJECT);
+        
+        // Read from config file (this is where we persist settings)
+        let openCodeConfig: Record<string, unknown> = {};
+        if (configPath) {
+          openCodeConfig = readOpenCodeConfig(configPath);
+        }
+        
+        // Extract only MCP-relevant settings
+        const relevantKeys = ['model', 'small_model', 'default_agent', 'provider'];
+        const filteredConfig = Object.fromEntries(
+          Object.entries(openCodeConfig)
+            .filter(([k]) => relevantKeys.includes(k))
+            .filter(([, v]) => v !== undefined && v !== null)
+        );
         
         return {
           content: [{ type: 'text' as const, text: JSON.stringify({
@@ -269,8 +303,9 @@ export function createConfigHandlers(client: OpenCodeClient) {
               timeout: parseInt(process.env.OPENCODE_TIMEOUT || '120000', 10),
               transport: process.env.MCP_TRANSPORT || 'stdio',
               defaultProject: process.env.OPENCODE_DEFAULT_PROJECT,
+              configPath: configPath,
             },
-            openCode: openCodeConfig,
+            openCode: filteredConfig,
           }, null, 2) }],
         };
       } catch (error) {
@@ -285,29 +320,41 @@ export function createConfigHandlers(client: OpenCodeClient) {
     async opencode_config_update(params: { 
       model?: string; 
       smallModel?: string; 
-      autoupdate?: boolean;
-      theme?: string;
       defaultAgent?: string;
     }) {
       try {
-        // Build config update instructions
+        // Build config updates (convert to opencode.json format)
         const updates: Record<string, unknown> = {};
         if (params.model) updates.model = params.model;
         if (params.smallModel) updates.small_model = params.smallModel;
-        if (params.autoupdate !== undefined) updates.autoupdate = params.autoupdate;
-        if (params.theme) updates.theme = params.theme;
         if (params.defaultAgent) updates.default_agent = params.defaultAgent;
+        
+        // 1. Update runtime config via API
+        const apiResult = await client.updateConfig(updates);
+        
+        // 2. Persist to opencode.json file
+        const configPath = detectConfigPath(process.env.OPENCODE_DEFAULT_PROJECT);
+        let persistResult: { success: boolean; error?: string } = { success: false, error: 'Config path not detected' };
+        
+        if (configPath) {
+          persistResult = writeOpenCodeConfig(configPath, updates);
+        }
         
         return {
           content: [{ 
             type: 'text' as const, 
             text: JSON.stringify({
-              message: 'Add these settings to your opencode.json:',
-              config: updates,
-              note: 'Environment variables can also be used to override these settings.',
-              examples: {
-                model: 'Set OPENCODE_DEFAULT_MODEL=anthropic/claude-sonnet-4',
-                timeout: 'Set OPENCODE_TIMEOUT=300000 (5 minutes)',
+              success: true,
+              message: 'Configuration updated',
+              updates,
+              api: {
+                updated: true,
+                result: apiResult,
+              },
+              file: {
+                path: configPath,
+                persisted: persistResult.success,
+                error: persistResult.error,
               },
             }, null, 2) 
           }],

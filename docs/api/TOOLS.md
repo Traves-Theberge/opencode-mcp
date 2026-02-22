@@ -69,6 +69,45 @@ All tools include MCP-compliant annotations for LLM discoverability:
 
 ---
 
+## Config Persistence
+
+Config tools (`opencode_model_configure`, `opencode_config_update`) use a **hybrid persistence approach**:
+
+### How It Works
+
+1. **API Update** - Changes are sent to the OpenCode server for immediate effect
+2. **File Persistence** - Changes are saved to `opencode.json` to survive server restarts
+
+### Config Path Detection
+
+The config file location is detected in this priority:
+
+| Priority | Location | Description |
+|----------|----------|-------------|
+| 1 | `OPENCODE_CONFIG_PATH` env | Explicit override |
+| 2 | `{workingDirectory}/.opencode/opencode.json` | Project local |
+| 3 | `~/.config/opencode/opencode.json` | Global (default) |
+
+### Deep Merge Behavior
+
+Changes are deep-merged with existing config:
+
+```json
+// Existing config
+{
+  "model": "anthropic/claude-4",
+  "provider": { "anthropic": { "models": { "claude-4": { "options": { "maxTokens": 2048 } } } } }
+}
+
+// After opencode_model_configure({ provider: "anthropic", model: "claude-4", options: { "reasoningEffort": "high" } })
+{
+  "model": "anthropic/claude-4",
+  "provider": { "anthropic": { "models": { "claude-4": { "options": { "maxTokens": 2048, "reasoningEffort": "high" } } } } }
+}
+```
+
+---
+
 ## Error Response Format
 
 All tools return errors in a consistent format:
@@ -310,7 +349,9 @@ List all available models from configured providers.
 
 ### `opencode_model_configure`
 
-Configure model options.
+Configure model options (reasoningEffort, maxTokens, thinking, etc.).
+
+**Uses Hybrid Persistence**: Changes apply immediately to runtime AND are saved to `opencode.json`.
 
 **Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
@@ -329,8 +370,24 @@ Configure model options.
   "provider": "anthropic",
   "model": "claude-sonnet-4",
   "options": {
-    "temperature": 0.1,
+    "reasoningEffort": "high",
     "thinking": { "type": "enabled", "budgetTokens": 16000 }
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Model claude-sonnet-4 configured for provider anthropic",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4",
+  "options": { "reasoningEffort": "high" },
+  "api": { "updated": true },
+  "file": {
+    "path": "/home/user/.config/opencode/opencode.json",
+    "persisted": true
   }
 }
 ```
@@ -349,11 +406,29 @@ List all providers and their connection status.
 
 ### `opencode_config_get`
 
-Get current OpenCode configuration.
+Get current OpenCode configuration (MCP-relevant settings only).
 
 **Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
 
 **Input Schema**: `{}`
+
+**Response**:
+```json
+{
+  "mcpServer": {
+    "serverUrl": "http://localhost:4096",
+    "autoStart": true,
+    "timeout": 120000,
+    "transport": "stdio",
+    "defaultProject": "/path/to/project",
+    "configPath": "/home/user/.config/opencode/opencode.json"
+  },
+  "openCode": {
+    "model": "anthropic/claude-sonnet-4",
+    "provider": { "anthropic": { "models": { ... } } }
+  }
+}
+```
 
 ---
 
@@ -361,16 +436,30 @@ Get current OpenCode configuration.
 
 Update OpenCode configuration settings.
 
+**Uses Hybrid Persistence**: Changes apply immediately to runtime AND are saved to `opencode.json`.
+
 **Annotations**: `destructiveHint: true`, `openWorldHint: true`
 
 **Input Schema**:
 ```json
 {
-  "model": "string (optional) - Default model",
+  "model": "string (optional) - Default model (provider/model format)",
   "smallModel": "string (optional) - Small model for lightweight tasks",
-  "autoupdate": "boolean (optional) - Auto-update setting",
-  "theme": "string (optional) - Theme name",
   "defaultAgent": "string (optional) - Default agent name"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Configuration updated",
+  "updates": { "model": "anthropic/claude-sonnet-4" },
+  "api": { "updated": true },
+  "file": {
+    "path": "/home/user/.config/opencode/opencode.json",
+    "persisted": true
+  }
 }
 ```
 

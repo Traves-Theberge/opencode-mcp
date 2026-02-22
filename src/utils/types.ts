@@ -19,6 +19,8 @@ export interface ServerConfig {
   transport: 'stdio' | 'http';
   /** HTTP port for HTTP transport */
   httpPort?: number;
+  /** Path to opencode.json config file for persisting settings */
+  configPath?: string;
 }
 
 export const DEFAULT_CONFIG: ServerConfig = {
