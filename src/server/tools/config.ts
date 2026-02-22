@@ -186,32 +186,30 @@ export function createConfigHandlers(client: OpenCodeClient) {
 
     async opencode_model_configure(params: { provider: string; model: string; options: Record<string, unknown> }) {
       try {
-        // Return config instructions - actual update requires SDK support
+        // Build the config update
+        const config = {
+          provider: {
+            [params.provider]: {
+              models: {
+                [params.model]: {
+                  options: params.options,
+                },
+              },
+            },
+          },
+        };
+        
+        // Actually update the config via SDK
+        const result = await client.updateConfig(config);
+        
         return {
           content: [{ 
             type: 'text' as const, 
             text: JSON.stringify({
-              message: 'Add this model configuration to your opencode.json:',
-              config: {
-                provider: {
-                  [params.provider]: {
-                    models: {
-                      [params.model]: {
-                        options: params.options,
-                      },
-                    },
-                  },
-                },
-              },
-              example: `"provider": {
-  "${params.provider}": {
-    "models": {
-      "${params.model}": {
-        "options": ${JSON.stringify(params.options, null, 4)}
-      }
-    }
-  }
-}`,
+              success: true,
+              message: `Model ${params.model} configured for provider ${params.provider}`,
+              options: params.options,
+              result,
             }, null, 2) 
           }],
         };

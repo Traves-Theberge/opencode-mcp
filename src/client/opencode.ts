@@ -66,6 +66,7 @@ export interface OpenCodeClient {
   prompt(sessionId: string, promptText: string, options?: PromptOptions): Promise<{ sessionId: string; messageId: string; content: string }>;
   listAgents(): Promise<unknown[]>;
   listProviders(): Promise<{ providers: unknown[]; defaults: Record<string, string> }>;
+  updateConfig(config: Record<string, unknown>): Promise<unknown>;
   readFile(path: string): Promise<{ content: string }>;
   searchText(pattern: string, directory?: string): Promise<unknown[]>;
   findFiles(query: string, type?: 'file' | 'directory', limit?: number): Promise<string[]>;
@@ -310,6 +311,19 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     };
   }
 
+  async function updateConfig(config: Record<string, unknown>): Promise<unknown> {
+    await ensureConnected();
+    console.error(`[updateConfig] Updating config:`, JSON.stringify(config, null, 2));
+    
+    const result = await withTimeout(
+      () => client.config.update({ body: config }),
+      'Update config'
+    );
+    
+    console.error(`[updateConfig] Response:`, JSON.stringify(result.data, null, 2));
+    return result.data;
+  }
+
   async function readFile(path: string): Promise<{ content: string }> {
     await ensureConnected();
     const result = await withTimeout(
@@ -386,6 +400,7 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     prompt,
     listAgents,
     listProviders,
+    updateConfig,
     readFile,
     searchText,
     findFiles,
