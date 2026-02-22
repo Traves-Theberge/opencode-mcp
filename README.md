@@ -9,7 +9,7 @@
 
 ## Overview
 
-OpenCode MCP Server allows any MCP-compatible client (Cursor, Windsurf, Claude Desktop, etc.) to delegate coding tasks to OpenCode as a subagent. This enables powerful multi-tool workflows where your primary AI assistant can call upon OpenCode for:
+OpenCode MCP Server allows any MCP-compatible client (Cursor, Windsurf, Claude Desktop, Claude Code, Opencode, Antigravity, Zed, etc.) to delegate coding tasks to OpenCode as a subagent. This enables powerful multi-tool workflows where your primary AI assistant can call upon OpenCode for:
 
 - Code implementation and refactoring
 - File operations and search
