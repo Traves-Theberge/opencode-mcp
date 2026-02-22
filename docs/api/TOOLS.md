@@ -6,14 +6,14 @@ Complete reference for all OpenCode MCP Server tools.
 
 | Category | Count | Tools |
 |----------|-------|-------|
-| Execution | 6 | `opencode_run`, `opencode_session_*` |
+| Execution | 5 | `opencode_run`, `opencode_session_*` |
 | Files | 4 | `opencode_file_*`, `opencode_find_*` |
-| Config | 6 | `opencode_model_*`, `opencode_config_*`, `opencode_auth_*` |
+| Config | 5 | `opencode_model_*`, `opencode_config_*`, `opencode_provider_*` |
 | Agents | 2 | `opencode_agent_*` |
-| Skills | 3 | `opencode_skill_*` |
+| Skills | 2 | `opencode_skill_*` |
 | MCP | 4 | `opencode_mcp_*` |
-| Tools | 3 | `opencode_tool_*`, `opencode_permission_*` |
-| **Total** | **28** | |
+| Tools | 1 | `opencode_tool_list` |
+| **Total** | **23** | |
 
 ---
 
@@ -42,7 +42,6 @@ All tools include MCP-compliant annotations for LLM discoverability:
 | `opencode_config_get` | ✓ | ✓ | ✓ |
 | `opencode_agent_list` | ✓ | ✓ | ✓ |
 | `opencode_skill_list` | ✓ | ✓ | ✓ |
-| `opencode_skill_load` | ✓ | ✓ | ✓ |
 | `opencode_mcp_list` | ✓ | ✓ | ✓ |
 | `opencode_tool_list` | ✓ | ✓ | ✓ |
 
@@ -54,17 +53,13 @@ All tools include MCP-compliant annotations for LLM discoverability:
 | `opencode_session_create` | ✗ | ✓ | Creates new resource |
 | `opencode_session_prompt` | ✓ | ✓ | May modify files |
 | `opencode_session_abort` | ✓ | ✓ | Stops running session |
-| `opencode_session_share` | ✗ | ✓ | Creates share link |
 | `opencode_model_configure` | ✓ | ✓ | Changes model settings |
 | `opencode_config_update` | ✓ | ✓ | Changes configuration |
-| `opencode_auth_set` | ✓ | ✓ | Sets credentials |
 | `opencode_agent_delegate` | ✓ | ✓ | May execute changes |
 | `opencode_skill_create` | ✗ | ✓ | Creates new skill |
 | `opencode_mcp_add` | ✗ | ✓ | Adds MCP server |
 | `opencode_mcp_remove` | ✓ | ✓ | Removes MCP server |
 | `opencode_mcp_enable` | ✓ | ✓ | Changes server state |
-| `opencode_tool_configure` | ✓ | ✓ | Changes tool settings |
-| `opencode_permission_set` | ✓ | ✓ | Changes permissions |
 
 ---
 
@@ -233,23 +228,6 @@ Abort a running session.
   "sessionId": "string (required) - Session ID"
 }
 ```
-
----
-
-### `opencode_session_share`
-
-Share a session. Returns a shareable link.
-
-**Annotations**: `destructiveHint: false`, `openWorldHint: true`
-
-**Input Schema**:
-```json
-{
-  "sessionId": "string (required) - Session ID"
-}
-```
-
-**Returns**: `{ shareUrl: string }`
 
 ---
 
@@ -454,24 +432,6 @@ Update OpenCode configuration settings.
 
 ---
 
-### `opencode_auth_set`
-
-Set authentication credentials for a provider.
-
-**Annotations**: `destructiveHint: true`, `openWorldHint: true`
-
-**Input Schema**:
-```json
-{
-  "provider": "string (required) - Provider ID",
-  "type": "string (required) - 'api' or 'oauth'",
-  "key": "string (optional) - API key (for api type)",
-  "token": "string (optional) - OAuth token (for oauth type)"
-}
-```
-
----
-
 ## Agent Tools
 
 ### `opencode_agent_list`
@@ -519,21 +479,6 @@ List all available skills from SKILL.md files.
 **Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
 
 **Input Schema**: `{}`
-
----
-
-### `opencode_skill_load`
-
-Load a skill and return its content.
-
-**Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
-
-**Input Schema**:
-```json
-{
-  "name": "string (required) - Skill name to load"
-}
-```
 
 ---
 
@@ -635,52 +580,3 @@ List all available tools.
   "model": "string (optional) - Filter by model"
 }
 ```
-
----
-
-### `opencode_tool_configure`
-
-Enable or disable tools.
-
-**Annotations**: `destructiveHint: true`, `openWorldHint: true`
-
-**Input Schema**:
-```json
-{
-  "tools": "object (required) - Tool name patterns and enabled state",
-  "agent": "string (optional) - Apply to specific agent"
-}
-```
-
-**Example**:
-```json
-{
-  "tools": {
-    "mymcp_*": false,
-    "read": true,
-    "bash": false
-  }
-}
-```
-
----
-
-### `opencode_permission_set`
-
-Set permission level for a tool.
-
-**Annotations**: `destructiveHint: true`, `openWorldHint: true`
-
-**Input Schema**:
-```json
-{
-  "tool": "string (required) - Tool name or pattern",
-  "permission": "string (required) - 'allow', 'ask', or 'deny'",
-  "agent": "string (optional) - Apply to specific agent"
-}
-```
-
-**Permission Levels**:
-- `allow`: Tool runs without user approval
-- `ask`: User is prompted for approval before tool runs
-- `deny`: Tool is disabled and cannot be used

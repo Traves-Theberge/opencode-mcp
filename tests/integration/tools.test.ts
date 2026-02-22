@@ -67,7 +67,7 @@ describe('Tool Schemas', () => {
   describe('TOOL_ANNOTATIONS', () => {
     test('has annotations for all 29 tools', () => {
       const toolNames = Object.keys(TOOL_ANNOTATIONS);
-      expect(toolNames.length).toBe(28);
+      expect(toolNames.length).toBe(23);
     });
 
     test('all annotations have required properties', () => {

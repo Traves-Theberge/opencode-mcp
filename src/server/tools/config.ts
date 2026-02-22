@@ -36,13 +36,6 @@ export const INPUT_SCHEMAS = {
     defaultAgent: z.string().optional().describe('Default agent name'),
   },
   
-  AuthSetInputSchema: {
-    provider: z.string().min(1, { error: 'Provider ID is required' }).describe('Provider ID (e.g., anthropic, openai)'),
-    type: z.enum(['api', 'oauth']).describe('Authentication type'),
-    key: z.string().optional().describe('API key (for api type)'),
-    token: z.string().optional().describe('OAuth token (for oauth type)'),
-  },
-  
   EmptySchema: {},
 };
 
@@ -96,20 +89,6 @@ export function getConfigToolDefinitions(): Array<{ name: string; description: s
           smallModel: { type: 'string' },
           defaultAgent: { type: 'string' },
         },
-      },
-    },
-    {
-      name: 'opencode_auth_set',
-      description: 'Set authentication credentials for a provider. Supports API keys and OAuth tokens.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          provider: { type: 'string' },
-          type: { type: 'string', enum: ['api', 'oauth'] },
-          key: { type: 'string' },
-          token: { type: 'string' },
-        },
-        required: ['provider', 'type'],
       },
     },
   ];
@@ -364,50 +343,6 @@ export function createConfigHandlers(client: OpenCodeClient) {
           'Updating configuration',
           error,
           ERROR_SUGGESTIONS.invalidInput
-        );
-      }
-    },
-
-    async opencode_auth_set(params: { provider: string; type: 'api' | 'oauth'; key?: string; token?: string }) {
-      try {
-        if (params.type === 'api' && !params.key) {
-          return createErrorResponse(
-            'Setting authentication',
-            new Error('API key is required for api authentication type'),
-            [
-              `Provide the key parameter with your API key`,
-              `Example: opencode_auth_set(provider="${params.provider}", type="api", key="sk-...")`,
-            ]
-          );
-        }
-        
-        // Return instructions for setting auth
-        return {
-          content: [{ 
-            type: 'text' as const, 
-            text: JSON.stringify({
-              message: 'Set authentication for provider:',
-              provider: params.provider,
-              instructions: params.type === 'api' 
-                ? [
-                    `Set environment variable: ${params.provider.toUpperCase().replace(/-/g, '_')}_API_KEY=${params.key?.substring(0, 10)}...`,
-                    `Or run: opencode auth login ${params.provider}`,
-                    `Or add to opencode.json under providers.${params.provider}.apiKey`,
-                  ]
-                : [
-                    `Run: opencode auth login ${params.provider}`,
-                    'This will open a browser for OAuth authentication.',
-                    'Complete the authentication flow in your browser.',
-                  ],
-              security_note: 'Never commit API keys to version control. Use environment variables or secure secret management.',
-            }, null, 2) 
-          }],
-        };
-      } catch (error) {
-        return createErrorResponse(
-          'Setting authentication',
-          error,
-          ERROR_SUGGESTIONS.unauthorized
         );
       }
     },

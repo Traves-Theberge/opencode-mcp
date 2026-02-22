@@ -134,9 +134,9 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for all supported IDEs.
 
-## Available Tools (28)
+## Available Tools (23)
 
-### Execution (6)
+### Execution (5)
 | Tool | Description |
 |------|-------------|
 | `opencode_run` | Execute a coding task through OpenCode |
@@ -144,7 +144,6 @@ See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for
 | `opencode_session_prompt` | Send a prompt to a session |
 | `opencode_session_list` | List all sessions |
 | `opencode_session_abort` | Abort a running session |
-| `opencode_session_share` | Share a session |
 
 ### Files (4)
 | Tool | Description |
@@ -154,7 +153,7 @@ See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for
 | `opencode_find_files` | Find files by name/pattern |
 | `opencode_find_symbols` | Find workspace symbols |
 
-### Config (6)
+### Config (5)
 | Tool | Description |
 |------|-------------|
 | `opencode_model_list` | List available models |
@@ -162,7 +161,6 @@ See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for
 | `opencode_provider_list` | List providers |
 | `opencode_config_get` | Get configuration |
 | `opencode_config_update` | Update configuration |
-| `opencode_auth_set` | Set authentication |
 
 ### Agents (2)
 | Tool | Description |
@@ -170,11 +168,10 @@ See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for
 | `opencode_agent_list` | List available agents |
 | `opencode_agent_delegate` | Delegate to an agent |
 
-### Skills (3)
+### Skills (2)
 | Tool | Description |
 |------|-------------|
 | `opencode_skill_list` | List available skills |
-| `opencode_skill_load` | Load a skill |
 | `opencode_skill_create` | Create a skill |
 
 ### MCP Management (4)
@@ -185,12 +182,10 @@ See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for
 | `opencode_mcp_remove` | Remove an MCP server |
 | `opencode_mcp_enable` | Enable/disable MCP server |
 
-### Tool Config (3)
+### Tool Config (1)
 | Tool | Description |
 |------|-------------|
 | `opencode_tool_list` | List all tools |
-| `opencode_tool_configure` | Enable/disable tools |
-| `opencode_permission_set` | Set tool permissions |
 
 ## Usage Examples
 

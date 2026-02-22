@@ -17,10 +17,6 @@ import { createErrorResponse, ERROR_SUGGESTIONS } from './schemas.js';
 export const INPUT_SCHEMAS = {
   SkillListInputSchema: {},
   
-  SkillLoadInputSchema: {
-    name: z.string().min(1, { error: 'Skill name is required' }).describe('Skill name to load'),
-  },
-  
   SkillCreateInputSchema: {
     name: z.string().min(1).max(64).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, { error: 'Skill name must be lowercase alphanumeric with hyphens' }).describe('Skill name'),
     description: z.string().min(1).max(1024).describe('When to use this skill'),
@@ -41,15 +37,6 @@ export function getSkillToolDefinitions(): Array<{ name: string; description: st
       name: 'opencode_skill_list',
       description: 'List all available skills from SKILL.md files. Skills are reusable behavior definitions that can be loaded on-demand.',
       inputSchema: { type: 'object', properties: {} },
-    },
-    {
-      name: 'opencode_skill_load',
-      description: 'Load a skill and return its content. Skills provide specialized instructions for specific tasks.',
-      inputSchema: {
-        type: 'object',
-        properties: { name: { type: 'string' } },
-        required: ['name'],
-      },
     },
     {
       name: 'opencode_skill_create',
@@ -153,47 +140,6 @@ export function createSkillHandlers(_client: OpenCodeClient) {
           'Listing skills',
           error,
           ERROR_SUGGESTIONS.connectionFailed
-        );
-      }
-    },
-
-    async opencode_skill_load(params: { name: string }) {
-      try {
-        // Get home directory
-        const homeDir = process.env.HOME ?? process.env.USERPROFILE ?? '~';
-        const cwd = process.cwd();
-        
-        // Try to read the skill file from various locations
-        const paths = [
-          join(cwd, '.opencode', 'skills', params.name, 'SKILL.md'),
-          join(cwd, '.claude', 'skills', params.name, 'SKILL.md'),
-          join(homeDir, '.config', 'opencode', 'skills', params.name, 'SKILL.md'),
-          join(homeDir, '.claude', 'skills', params.name, 'SKILL.md'),
-          join(homeDir, '.opencode', 'skills', params.name, 'SKILL.md'),
-        ];
-        
-        for (const skillPath of paths) {
-          try {
-            const content = await readFile(skillPath, 'utf-8');
-            return {
-              content: [{ type: 'text' as const, text: content }],
-            };
-          } catch {
-            // Try next path
-            continue;
-          }
-        }
-        
-        return createErrorResponse(
-          `Loading skill "${params.name}"`,
-          new Error('Skill not found in any known location'),
-          ERROR_SUGGESTIONS.skillNotFound
-        );
-      } catch (error) {
-        return createErrorResponse(
-          `Loading skill "${params.name}"`,
-          error,
-          ERROR_SUGGESTIONS.skillNotFound
         );
       }
     },

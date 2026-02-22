@@ -142,7 +142,7 @@ export async function registerAllTools(
   // Import annotations
   const { TOOL_ANNOTATIONS } = await import('./schemas.js');
 
-  // Register execution tools (6 tools)
+  // Register execution tools (5 tools)
   const { createExecutionHandlers: createExec, INPUT_SCHEMAS: execSchemas } = await import('./execution.js');
   const execHandlers = createExec(client, defaultModel);
   
@@ -154,7 +154,6 @@ export async function registerAllTools(
   s.tool('opencode_session_prompt', 'Send a prompt to an existing OpenCode session.', execSchemas.SessionPromptInputSchema, TOOL_ANNOTATIONS.opencode_session_prompt, execHandlers.opencode_session_prompt);
   s.tool('opencode_session_list', 'List all OpenCode sessions.', execSchemas.EmptySchema, TOOL_ANNOTATIONS.opencode_session_list, execHandlers.opencode_session_list);
   s.tool('opencode_session_abort', 'Abort a running OpenCode session.', execSchemas.SessionIdInputSchema, TOOL_ANNOTATIONS.opencode_session_abort, execHandlers.opencode_session_abort);
-  s.tool('opencode_session_share', 'Share an OpenCode session. Returns a shareable link.', execSchemas.SessionIdInputSchema, TOOL_ANNOTATIONS.opencode_session_share, execHandlers.opencode_session_share);
 
   // Register file tools (4 tools)
   const { createFileHandlers: createFile, INPUT_SCHEMAS: fileSchemas } = await import('./files.js');
@@ -165,7 +164,7 @@ export async function registerAllTools(
   s.tool('opencode_find_files', 'Find files and directories by name pattern using fuzzy matching.', fileSchemas.FindFilesInputSchema, TOOL_ANNOTATIONS.opencode_find_files, fileHandlers.opencode_find_files);
   s.tool('opencode_find_symbols', 'Find workspace symbols (functions, classes, variables) by name.', fileSchemas.FindSymbolsInputSchema, TOOL_ANNOTATIONS.opencode_find_symbols, fileHandlers.opencode_find_symbols);
 
-  // Register config tools (6 tools)
+  // Register config tools (5 tools)
   const { createConfigHandlers: createConfig, INPUT_SCHEMAS: configSchemas } = await import('./config.js');
   const configHandlers = createConfig(client);
   
@@ -174,7 +173,6 @@ export async function registerAllTools(
   s.tool('opencode_provider_list', 'List all providers and their connection status.', configSchemas.EmptySchema, TOOL_ANNOTATIONS.opencode_provider_list, configHandlers.opencode_provider_list);
   s.tool('opencode_config_get', 'Get current OpenCode MCP server configuration.', configSchemas.EmptySchema, TOOL_ANNOTATIONS.opencode_config_get, configHandlers.opencode_config_get);
   s.tool('opencode_config_update', 'Update OpenCode configuration settings. Updates both runtime config and persists to opencode.json.', configSchemas.ConfigUpdateInputSchema, TOOL_ANNOTATIONS.opencode_config_update, configHandlers.opencode_config_update);
-  s.tool('opencode_auth_set', 'Set authentication credentials for a provider. Supports API keys and OAuth tokens.', configSchemas.AuthSetInputSchema, TOOL_ANNOTATIONS.opencode_auth_set, configHandlers.opencode_auth_set);
 
   // Register agent tools (2 tools)
   const { createAgentHandlers: createAgent, INPUT_SCHEMAS: agentSchemas } = await import('./agents.js');
@@ -183,12 +181,11 @@ export async function registerAllTools(
   s.tool('opencode_agent_list', 'List all available agents (primary and subagents). Primary agents are used for main conversations, subagents are specialized assistants that can be invoked for specific tasks.', agentSchemas.AgentListInputSchema, TOOL_ANNOTATIONS.opencode_agent_list, agentHandlers.opencode_agent_list);
   s.tool('opencode_agent_delegate', 'Delegate a task to a specific agent. Use to invoke specialized agents like "plan" for analysis without changes, "explore" for fast codebase exploration, or custom agents for specific workflows.', agentSchemas.AgentDelegateInputSchema, TOOL_ANNOTATIONS.opencode_agent_delegate, agentHandlers.opencode_agent_delegate);
 
-  // Register skill tools (3 tools)
+  // Register skill tools (2 tools)
   const { createSkillHandlers: createSkill, INPUT_SCHEMAS: skillSchemas } = await import('./skills.js');
   const skillHandlers = createSkill(client);
   
   s.tool('opencode_skill_list', 'List all available skills from SKILL.md files. Skills are reusable behavior definitions that can be loaded on-demand.', skillSchemas.EmptySchema, TOOL_ANNOTATIONS.opencode_skill_list, skillHandlers.opencode_skill_list);
-  s.tool('opencode_skill_load', 'Load a skill and return its content. Skills provide specialized instructions for specific tasks.', skillSchemas.SkillLoadInputSchema, TOOL_ANNOTATIONS.opencode_skill_load, skillHandlers.opencode_skill_load);
   s.tool('opencode_skill_create', 'Create a new skill (SKILL.md file). Skills are reusable prompt templates for specialized tasks. Returns the skill content to save manually.', skillSchemas.SkillCreateInputSchema, TOOL_ANNOTATIONS.opencode_skill_create, skillHandlers.opencode_skill_create);
 
   // Register MCP management tools (4 tools)
@@ -200,11 +197,9 @@ export async function registerAllTools(
   s.tool('opencode_mcp_remove', 'Remove an MCP server from OpenCode configuration.', mcpSchemas.McpRemoveInputSchema, TOOL_ANNOTATIONS.opencode_mcp_remove, mcpHandlers.opencode_mcp_remove);
   s.tool('opencode_mcp_enable', 'Enable or disable an MCP server.', mcpSchemas.McpEnableInputSchema, TOOL_ANNOTATIONS.opencode_mcp_enable, mcpHandlers.opencode_mcp_enable);
 
-  // Register tool config tools (3 tools)
+  // Register tool config tools (1 tool)
   const { createToolConfigHandlers: createToolConfig, INPUT_SCHEMAS: toolConfigSchemas } = await import('./tool-config.js');
   const toolConfigHandlers = createToolConfig(client);
   
   s.tool('opencode_tool_list', 'List all available tools (built-in and from MCP servers). Optionally filter by provider/model.', toolConfigSchemas.ToolListInputSchema, TOOL_ANNOTATIONS.opencode_tool_list, toolConfigHandlers.opencode_tool_list);
-  s.tool('opencode_tool_configure', 'Enable or disable tools globally or per-agent. Use wildcards like "mymcp_*" to control multiple tools.', toolConfigSchemas.ToolConfigureInputSchema, TOOL_ANNOTATIONS.opencode_tool_configure, toolConfigHandlers.opencode_tool_configure);
-  s.tool('opencode_permission_set', 'Set permission level for a tool. Use "allow" (no approval), "ask" (prompt user), or "deny" (disable).', toolConfigSchemas.PermissionSetInputSchema, TOOL_ANNOTATIONS.opencode_permission_set, toolConfigHandlers.opencode_permission_set);
 }

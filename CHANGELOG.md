@@ -27,18 +27,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tool responses now include detailed info about both API and file persistence results
 
 ### Removed
-- `opencode_file_status`: Removed (redundant - IDEs have built-in git integration)
+- Removed redundant/unnecessary tools to streamline the API:
+  - `opencode_file_status`: Removed (redundant - IDEs have built-in git integration)
+  - `opencode_session_share`: Removed (rarely used, sessions are typically local)
+  - `opencode_auth_set`: Removed (returns instructions only, better handled via CLI/env)
+  - `opencode_skill_load`: Removed (redundant - files can be read directly)
+  - `opencode_tool_configure`: Removed (returns instructions only)
+  - `opencode_permission_set`: Removed (returns instructions only)
 - Removed TUI-specific options from config tools:
   - `opencode_config_update`: Removed `theme` and `autoupdate` parameters (TUI-only)
   - `opencode_config_get`: No longer returns TUI settings (keybinds, agent definitions, etc.)
 - Removed `temperature` from examples (not a relevant model option for OpenCode)
-- Tool count reduced from 29 to 28
+- Tool count reduced from 29 to 23
 
 ### Documentation
-- Updated README with hybrid config persistence feature
+- Updated README with hybrid config persistence feature and updated tool counts
 - Updated environment variables table with `OPENCODE_CONFIG_PATH`
 - Added config path detection section
 - Updated API docs for config tools with new response formats
+- Removed documentation for deprecated tools
 
 ## [0.2.1] - 2025-02-22
 

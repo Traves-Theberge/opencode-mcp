@@ -111,7 +111,6 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   opencode_session_prompt: ANNOTATIONS.writeExternal,
   opencode_session_list: ANNOTATIONS.readOnlyExternal,
   opencode_session_abort: ANNOTATIONS.writeExternal,
-  opencode_session_share: ANNOTATIONS.create,
 
   // File tools - read operations
   opencode_file_read: ANNOTATIONS.readOnlyExternal,
@@ -125,7 +124,6 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   opencode_provider_list: ANNOTATIONS.readOnlyExternal,
   opencode_config_get: ANNOTATIONS.readOnlyExternal,
   opencode_config_update: ANNOTATIONS.writeExternal,
-  opencode_auth_set: ANNOTATIONS.writeExternal,
 
   // Agent tools
   opencode_agent_list: ANNOTATIONS.readOnlyExternal,
@@ -133,7 +131,6 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
 
   // Skill tools
   opencode_skill_list: ANNOTATIONS.readOnlyExternal,
-  opencode_skill_load: ANNOTATIONS.readOnlyExternal,
   opencode_skill_create: ANNOTATIONS.create,
 
   // MCP management tools
@@ -144,8 +141,6 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
 
   // Tool config tools
   opencode_tool_list: ANNOTATIONS.readOnlyExternal,
-  opencode_tool_configure: ANNOTATIONS.writeExternal,
-  opencode_permission_set: ANNOTATIONS.writeExternal,
 };
 
 // ============================================================================

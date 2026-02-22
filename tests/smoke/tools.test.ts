@@ -38,7 +38,7 @@ describe('Smoke Tests - Tools', () => {
       const { getExecutionToolDefinitions } = await import('../../src/server/tools/execution.js');
       const definitions = getExecutionToolDefinitions();
       
-      expect(definitions.length).toBe(6);
+      expect(definitions.length).toBe(5);
       
       // Check opencode_run tool
       const runTool = definitions.find(t => t.name === 'opencode_run');
@@ -58,9 +58,6 @@ describe('Smoke Tests - Tools', () => {
       
       const sessionAbort = definitions.find(t => t.name === 'opencode_session_abort');
       expect(sessionAbort).toBeDefined();
-      
-      const sessionShare = definitions.find(t => t.name === 'opencode_session_share');
-      expect(sessionShare).toBeDefined();
     });
 
     test('file tools have correct definitions', async () => {
@@ -86,7 +83,7 @@ describe('Smoke Tests - Tools', () => {
       const { getConfigToolDefinitions } = await import('../../src/server/tools/config.js');
       const definitions = getConfigToolDefinitions();
       
-      expect(definitions.length).toBe(6);
+      expect(definitions.length).toBe(5);
       
       const configGet = definitions.find(t => t.name === 'opencode_config_get');
       expect(configGet).toBeDefined();
@@ -102,9 +99,6 @@ describe('Smoke Tests - Tools', () => {
       
       const configUpdate = definitions.find(t => t.name === 'opencode_config_update');
       expect(configUpdate).toBeDefined();
-      
-      const authSet = definitions.find(t => t.name === 'opencode_auth_set');
-      expect(authSet).toBeDefined();
     });
 
     test('agent tools have correct definitions', async () => {
@@ -124,14 +118,11 @@ describe('Smoke Tests - Tools', () => {
       const { getSkillToolDefinitions } = await import('../../src/server/tools/skills.js');
       const definitions = getSkillToolDefinitions();
       
-      expect(definitions.length).toBe(3);
+      expect(definitions.length).toBe(2);
       
       const skillList = definitions.find(t => t.name === 'opencode_skill_list');
       expect(skillList).toBeDefined();
       expect(skillList?.description).toContain('skill');
-      
-      const skillLoad = definitions.find(t => t.name === 'opencode_skill_load');
-      expect(skillLoad).toBeDefined();
       
       const skillCreate = definitions.find(t => t.name === 'opencode_skill_create');
       expect(skillCreate).toBeDefined();
@@ -161,16 +152,10 @@ describe('Smoke Tests - Tools', () => {
       const { getToolConfigToolDefinitions } = await import('../../src/server/tools/tool-config.js');
       const definitions = getToolConfigToolDefinitions();
       
-      expect(definitions.length).toBe(3);
+      expect(definitions.length).toBe(1);
       
       const toolList = definitions.find(t => t.name === 'opencode_tool_list');
       expect(toolList).toBeDefined();
-      
-      const toolConfigure = definitions.find(t => t.name === 'opencode_tool_configure');
-      expect(toolConfigure).toBeDefined();
-      
-      const permissionSet = definitions.find(t => t.name === 'opencode_permission_set');
-      expect(permissionSet).toBeDefined();
     });
   });
 
@@ -179,7 +164,7 @@ describe('Smoke Tests - Tools', () => {
       const { getAllToolDefinitions } = await import('../../src/server/tools/index.js');
       const definitions = getAllToolDefinitions();
       
-      expect(definitions.length).toBe(28);
+      expect(definitions.length).toBe(23);
       
       for (const tool of definitions) {
         expect(tool.name).toBeTruthy();

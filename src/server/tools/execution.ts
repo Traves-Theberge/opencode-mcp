@@ -190,15 +190,6 @@ export function getExecutionToolDefinitions(): Array<{ name: string; description
         required: ['sessionId'],
       },
     },
-    {
-      name: 'opencode_session_share',
-      description: 'Share an OpenCode session. Returns a shareable link.',
-      inputSchema: {
-        type: 'object',
-        properties: { sessionId: { type: 'string' } },
-        required: ['sessionId'],
-      },
-    },
   ];
 }
 
@@ -355,23 +346,6 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
       } catch (error) {
         return createErrorResponse(
           'Aborting session',
-          error,
-          ERROR_SUGGESTIONS.sessionNotFound
-        );
-      }
-    },
-
-    async opencode_session_share(params: { sessionId: string }) {
-      try {
-        const session = await client.shareSession(params.sessionId);
-        return {
-          content: [{ type: 'text' as const, text: JSON.stringify({
-            shareUrl: session.shareUrl,
-          }, null, 2) }],
-        };
-      } catch (error) {
-        return createErrorResponse(
-          'Sharing session',
           error,
           ERROR_SUGGESTIONS.sessionNotFound
         );
