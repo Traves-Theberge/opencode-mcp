@@ -214,6 +214,55 @@ Use opencode_model_configure to set reasoningEffort to high for deep thinking ta
 Use opencode_skill_create to create a skill for database migration patterns
 ```
 
+## Configuration Files
+
+This project includes pre-configured files for various AI coding agents:
+
+### Root-Level Config Files
+
+| File | Format | Used By |
+|------|--------|---------|
+| `AGENTS.md` | Universal | Codex, Cursor, Gemini CLI, Claude Code, Windsurf, Zed, Cline |
+| `CLAUDE.md` | Claude Code | Claude Code |
+| `.cursorrules` | Plain text | Cursor |
+| `.windsurfrules` | Plain text | Windsurf |
+| `.clinerules/rules.md` | Markdown | Cline |
+| `.continue/rules/opencode.md` | YAML+Markdown | Continue.dev |
+| `.github/copilot-instructions.md` | Markdown | GitHub Copilot |
+
+### configs/ Directory
+
+```
+configs/
+├── agents/
+│   ├── AGENTS.md      # Universal agent format
+│   └── CLAUDE.md      # Claude Code specific
+├── skills/
+│   └── SKILL.md       # Agent Skills format (agentskills.io)
+├── rules/
+│   ├── cursor.md      # Cursor rules
+│   ├── continue.md    # Continue rules (YAML frontmatter)
+│   └── copilot-instructions.md
+├── mcp/
+│   └── templates.md   # MCP config templates
+└── README.md          # Config documentation
+```
+
+### Agent Skills Format (SKILL.md)
+
+Based on [agentskills.io](https://agentskills.io) specification:
+
+```yaml
+---
+name: skill-name
+description: When to use this skill
+---
+
+# Instructions...
+```
+
+See `configs/README.md` for installation instructions.
+
 ## Transport Modes
 
 ### stdio (Default)

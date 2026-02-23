@@ -1,6 +1,12 @@
+---
+name: OpenCode MCP Server Rules
+globs: "**/*"
+description: Rules for using OpenCode MCP Server tools for coding tasks
+---
+
 # OpenCode MCP Server Rules
 
-Project rules for AI coding agents.
+Rules for AI coding agents using the OpenCode MCP Server.
 
 ## Project Overview
 
