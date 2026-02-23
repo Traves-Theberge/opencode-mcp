@@ -1,0 +1,24 @@
+{
+  "$schema": "https://gist.githubusercontent.com/Traves-Theberge/placeholder/schema.json",
+  "_comment": "Gemini CLI MCP Configuration Template",
+  "_location": "~/.gemini/settings.json (global) or .gemini/settings.json (project)",
+  "_usage": [
+    "1. Copy this file to ~/.gemini/settings.json (global) or .gemini/settings.json (project)",
+    "2. Replace /path/to/opencode-mcp with your actual path",
+    "3. Replace /path/to/project with your project directory",
+    "",
+    "Or add via CLI:",
+    "  gemini mcp add opencode -- node /path/to/opencode-mcp/dist/index.js"
+  ],
+  "mcpServers": {
+    "opencode": {
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
+      "env": {
+        "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/project",
+        "OPENCODE_LOG_LEVEL": "info"
+      }
+    }
+  }
+}

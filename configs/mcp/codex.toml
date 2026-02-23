@@ -1,0 +1,21 @@
+# Codex CLI MCP Configuration Template
+# Location: ~/.codex/config.toml
+# 
+# Usage:
+#   1. Copy this file to ~/.codex/config.toml
+#   2. Replace /path/to/opencode-mcp with your actual path
+#   3. Replace /path/to/project with your project directory
+#
+# Or add via CLI:
+#   codex mcp add opencode -- node /path/to/opencode-mcp/dist/index.js
+
+[mcp_servers.opencode]
+command = "node"
+args = ["/path/to/opencode-mcp/dist/index.js"]
+
+[mcp_servers.opencode.env]
+OPENCODE_SERVER_URL = "http://localhost:4096"
+OPENCODE_DEFAULT_PROJECT = "/path/to/project"
+OPENCODE_LOG_LEVEL = "info"
+# OPENCODE_TIMEOUT = "120000"
+# OPENCODE_LOG_TIMESTAMP = "false"

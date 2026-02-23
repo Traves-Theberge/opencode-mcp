@@ -63,6 +63,8 @@ OpenCode MCP Server works with all major AI-enabled IDEs:
 
 | IDE | Config File | Setup Guide |
 |-----|-------------|-------------|
+| [Codex CLI](docs/setup-guides/codex.md) | `~/.codex/config.toml` | [Full Guide](docs/setup-guides/codex.md) |
+| [Gemini CLI](docs/setup-guides/gemini.md) | `~/.gemini/settings.json` | [Full Guide](docs/setup-guides/gemini.md) |
 | [Antigravity](docs/setup-guides/antigravity.md) | `~/.gemini/antigravity/mcp_config.json` | [Full Guide](docs/setup-guides/antigravity.md) |
 | [Cursor](docs/setup-guides/cursor.md) | `~/.cursor/mcp.json` | [Full Guide](docs/setup-guides/cursor.md) |
 | [Windsurf](docs/setup-guides/windsurf.md) | `~/.codeium/windsurf/mcp_config.json` | [Full Guide](docs/setup-guides/windsurf.md) |

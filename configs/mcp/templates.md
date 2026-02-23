@@ -2,6 +2,63 @@
 
 Templates for configuring the OpenCode MCP Server in various IDEs.
 
+## Codex CLI (OpenAI)
+
+Location: `~/.codex/config.toml`
+
+> **Note:** Codex CLI uses TOML format, not JSON.
+
+```toml
+[mcp_servers.opencode]
+command = "node"
+args = ["/path/to/opencode-mcp/dist/index.js"]
+
+[mcp_servers.opencode.env]
+OPENCODE_SERVER_URL = "http://localhost:4096"
+OPENCODE_DEFAULT_PROJECT = "/path/to/project"
+OPENCODE_LOG_LEVEL = "info"
+```
+
+**Or using CLI:**
+```bash
+codex mcp add opencode -- node /path/to/opencode-mcp/dist/index.js
+```
+
+## Gemini CLI
+
+Location: `~/.gemini/settings.json` (global) or `.gemini/settings.json` (project)
+
+```json
+{
+  "mcpServers": {
+    "opencode": {
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
+      "env": {
+        "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/project"
+      }
+    }
+  }
+}
+```
+
+**Or using CLI:**
+```bash
+gemini mcp add opencode -- node /path/to/opencode-mcp/dist/index.js
+```
+
+**HTTP Transport:**
+```json
+{
+  "mcpServers": {
+    "opencode": {
+      "httpUrl": "http://localhost:3000/mcp"
+    }
+  }
+}
+```
+
 ## Antigravity
 
 Location: `~/.gemini/antigravity/mcp_config.json`

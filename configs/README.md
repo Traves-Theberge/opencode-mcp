@@ -31,9 +31,12 @@ configs/
 ├── rules/
 │   ├── cursor.md      # Cursor/Windsurf/Zed rules
 │   ├── continue.md    # Continue rules (YAML frontmatter)
-│   └── copilot-instructions.md  # GitHub Copilot
+│   ├── copilot-instructions.md  # GitHub Copilot
+│   └── opencode.md    # OpenCode-specific rules
 ├── mcp/
-│   └── templates.md   # MCP config templates
+│   ├── templates.md   # MCP config templates for all IDEs
+│   ├── codex.toml     # Codex CLI config template
+│   └── gemini.json    # Gemini CLI config template
 └── README.md          # This file
 ```
 
@@ -41,6 +44,8 @@ configs/
 
 | Tool | Config File(s) | Notes |
 |------|----------------|-------|
+| **Codex CLI** | `~/.codex/config.toml`, `AGENTS.md` | Uses TOML format for MCP |
+| **Gemini CLI** | `~/.gemini/settings.json`, `AGENTS.md` | JSON format, supports stdio/HTTP |
 | **Cursor** | `.cursorrules`, `AGENTS.md` | Reads both |
 | **Windsurf** | `.windsurfrules`, `AGENTS.md` | Reads both |
 | **Claude Code** | `CLAUDE.md`, `.claude/skills/`, `AGENTS.md` | Skills in `.claude/skills/` |
@@ -50,9 +55,7 @@ configs/
 | **Roo Code** | `.clinerules/`, `AGENTS.md` | Cline-compatible |
 | **Continue.dev** | `.continue/rules/` | YAML frontmatter format |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | In `.github/` |
-| **Gemini CLI** | `AGENTS.md` | Universal format |
-| **Codex** | `AGENTS.md` | Universal format |
-| **Antigravity** | UI-based | Configure in Customizations menu |
+| **Antigravity** | `~/.gemini/antigravity/mcp_config.json` | JSON format |
 
 ## File Formats
 
