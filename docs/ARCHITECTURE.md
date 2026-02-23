@@ -34,14 +34,14 @@ Understanding the OpenCode MCP Server architecture.
 │  └────────────────────────────────────────────────────────────────────┘  │
 │                              │                                            │
 │  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │                      Tool Registry (29 tools)                       │  │
+│  │                      Tool Registry (23 tools)                       │  │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │  │
 │  │  │Execution │ │  Files   │ │  Config  │ │  Agents  │ │  Skills  │ │  │
-│  │  │  (6)     │ │  (5)     │ │  (6)     │ │  (2)     │ │  (3)     │ │  │
+│  │  │  (5)     │ │  (4)     │ │  (5)     │ │  (2)     │ │  (2)     │ │  │
 │  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘ │  │
 │  │  ┌──────────┐ ┌──────────┐                                           │  │
 │  │  │   MCP    │ │   Tool   │                                           │  │
-│  │  │  (4)     │ │ Config(3)│                                           │  │
+│  │  │  (4)     │ │ Config(1)│                                           │  │
 │  │  └──────────┘ └──────────┘                                           │  │
 │  └────────────────────────────────────────────────────────────────────┘  │
 │                              │                                            │
@@ -96,17 +96,17 @@ The core MCP protocol implementation using `@modelcontextprotocol/sdk`.
 
 ### 3. Tool Registry
 
-Organized collection of 29 tools across 7 categories:
+Organized collection of 23 tools across 7 categories:
 
 | Category | Tools | Purpose |
 |----------|-------|---------|
-| Execution | 6 | Run prompts, manage sessions |
-| Files | 5 | File operations and search |
-| Config | 6 | Model/provider configuration |
+| Execution | 5 | Run prompts, manage sessions |
+| Files | 4 | File operations and search |
+| Config | 5 | Model/provider configuration |
 | Agents | 2 | Agent listing and delegation |
-| Skills | 3 | Skill discovery and creation |
+| Skills | 2 | Skill discovery and creation |
 | MCP | 4 | Sub-MCP server management |
-| Tools | 3 | Tool configuration |
+| Tools | 1 | Tool listing |
 
 ### 4. OpenCode Client
 
@@ -157,7 +157,7 @@ server.tool('opencode_my_tool', 'Description', schema, annotations, handler);
 
 ## Tool Annotations
 
-All 29 tools include MCP-compliant annotations for better LLM discoverability:
+All 23 tools include MCP-compliant annotations for better LLM discoverability:
 
 | Annotation | Description |
 |------------|-------------|

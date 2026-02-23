@@ -151,28 +151,6 @@ Suggestions:
 
 ---
 
-### Authentication Errors
-
-**Trigger**: Invalid or missing API credentials
-
-**Example**:
-```
-Error: Setting authentication failed.
-
-Details: API key is required for api authentication type
-
-Suggestions:
-  1. Provide the key parameter with your API key
-  2. Example: opencode_auth_set(provider="anthropic", type="api", key="sk-...")
-```
-
-**Resolution**:
-1. Obtain API key from provider
-2. Set via `opencode_auth_set` or environment variable
-3. Run `opencode auth login <provider>` for OAuth
-
----
-
 ### Timeout Errors
 
 **Trigger**: Operation took too long

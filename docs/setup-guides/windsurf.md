@@ -133,7 +133,7 @@ Windsurf supports `${env:VAR_NAME}` syntax:
 2. Open Cascade panel
 3. Click the **MCPs** icon
 4. Verify `opencode` is listed with green status
-5. Click on it to see available tools (29 tools)
+5. Click on it to see available tools (23 tools)
 
 ## Managing Tools
 
