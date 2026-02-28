@@ -8,6 +8,7 @@ Complete setup instructions for configuring OpenCode MCP Server in various IDEs 
 |------------|-----------|-------------|--------|
 | [Codex CLI](./codex.md) | stdio | `~/.codex/config.toml` | ✅ Supported |
 | [Gemini CLI](./gemini.md) | stdio/HTTP | `~/.gemini/settings.json` | ✅ Supported |
+| [Roo Code](./roo-code.md) | stdio/HTTP | `mcp_settings.json` or `.roo/mcp.json` | ✅ Supported |
 | [Antigravity](./antigravity.md) | stdio | `~/.gemini/antigravity/mcp_config.json` | ✅ Supported |
 | [Cursor](./cursor.md) | stdio | `~/.cursor/mcp.json` | ✅ Supported |
 | [Windsurf](./windsurf.md) | stdio | `~/.codeium/windsurf/mcp_config.json` | ✅ Supported |
@@ -17,6 +18,7 @@ Complete setup instructions for configuring OpenCode MCP Server in various IDEs 
 | [Continue.dev](./continue.md) | stdio | `.continue/mcpServers/` | ✅ Supported |
 | [Zed](./zed.md) | stdio | `~/.config/zed/settings.json` | ✅ Supported |
 | [OpenCode](./opencode.md) | stdio/HTTP | `opencode.json` | ✅ Self-hosted |
+| [Aider MCP Server](./aider.md) | stdio | `aider-mcp` command | ✅ Reference |
 
 ## Quick Reference
 

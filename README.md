@@ -65,6 +65,7 @@ OpenCode MCP Server works with all major AI-enabled IDEs:
 |-----|-------------|-------------|
 | [Codex CLI](docs/setup-guides/codex.md) | `~/.codex/config.toml` | [Full Guide](docs/setup-guides/codex.md) |
 | [Gemini CLI](docs/setup-guides/gemini.md) | `~/.gemini/settings.json` | [Full Guide](docs/setup-guides/gemini.md) |
+| [Roo Code](docs/setup-guides/roo-code.md) | `mcp_settings.json` or `.roo/mcp.json` | [Full Guide](docs/setup-guides/roo-code.md) |
 | [Antigravity](docs/setup-guides/antigravity.md) | `~/.gemini/antigravity/mcp_config.json` | [Full Guide](docs/setup-guides/antigravity.md) |
 | [Cursor](docs/setup-guides/cursor.md) | `~/.cursor/mcp.json` | [Full Guide](docs/setup-guides/cursor.md) |
 | [Windsurf](docs/setup-guides/windsurf.md) | `~/.codeium/windsurf/mcp_config.json` | [Full Guide](docs/setup-guides/windsurf.md) |
@@ -74,6 +75,7 @@ OpenCode MCP Server works with all major AI-enabled IDEs:
 | [Continue.dev](docs/setup-guides/continue.md) | `.continue/mcpServers/` | [Full Guide](docs/setup-guides/continue.md) |
 | [Zed](docs/setup-guides/zed.md) | `~/.config/zed/settings.json` | [Full Guide](docs/setup-guides/zed.md) |
 | [OpenCode](docs/setup-guides/opencode.md) | `opencode.json` | [Full Guide](docs/setup-guides/opencode.md) |
+| [Aider MCP Server](docs/setup-guides/aider.md) | `aider-mcp` command | [Full Guide](docs/setup-guides/aider.md) |
 
 ### Quick Config (Antigravity)
 

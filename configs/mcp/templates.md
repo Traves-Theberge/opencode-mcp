@@ -59,6 +59,40 @@ gemini mcp add opencode -- node /path/to/opencode-mcp/dist/index.js
 }
 ```
 
+## Roo Code
+
+Global config: `mcp_settings.json` (opened from the Roo MCP settings UI)
+
+Project config: `.roo/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "opencode": {
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
+      "env": {
+        "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/project"
+      },
+      "disabled": false
+    }
+  }
+}
+```
+
+**Streamable HTTP:**
+```json
+{
+  "mcpServers": {
+    "opencode": {
+      "type": "streamable-http",
+      "url": "http://localhost:3000/mcp"
+    }
+  }
+}
+```
+
 ## Antigravity
 
 Location: `~/.gemini/antigravity/mcp_config.json`

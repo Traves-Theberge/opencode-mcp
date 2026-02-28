@@ -1,0 +1,21 @@
+{
+  "_comment": "Roo Code MCP Configuration Template",
+  "_location": "mcp_settings.json (global) or .roo/mcp.json (project)",
+  "_usage": [
+    "1. Open Roo Code MCP settings",
+    "2. Click Edit Global MCP or Edit Project MCP",
+    "3. Paste this configuration and update paths"
+  ],
+  "mcpServers": {
+    "opencode": {
+      "command": "node",
+      "args": ["/path/to/opencode-mcp/dist/index.js"],
+      "env": {
+        "OPENCODE_SERVER_URL": "http://localhost:4096",
+        "OPENCODE_DEFAULT_PROJECT": "/path/to/your/project",
+        "OPENCODE_LOG_LEVEL": "info"
+      },
+      "disabled": false
+    }
+  }
+}

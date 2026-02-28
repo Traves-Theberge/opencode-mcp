@@ -13,6 +13,7 @@ These files are automatically loaded by their respective tools:
 | `.cursorrules` | Plain text | Cursor |
 | `.windsurfrules` | Plain text | Windsurf |
 | `.rules` | Plain text | Zed |
+| `.roorules` | Markdown | Roo Code |
 | `.clinerules/rules.md` | Markdown | Cline, Roo Code |
 | `.continue/rules/opencode.md` | YAML+Markdown | Continue.dev |
 | `.github/copilot-instructions.md` | Markdown | GitHub Copilot |
@@ -32,11 +33,13 @@ configs/
 │   ├── cursor.md      # Cursor/Windsurf/Zed rules
 │   ├── continue.md    # Continue rules (YAML frontmatter)
 │   ├── copilot-instructions.md  # GitHub Copilot
-│   └── opencode.md    # OpenCode-specific rules
+│   ├── opencode.md    # OpenCode-specific rules
+│   └── roocode.md     # Roo Code rules
 ├── mcp/
 │   ├── templates.md   # MCP config templates for all IDEs
 │   ├── codex.toml     # Codex CLI config template
-│   └── gemini.json    # Gemini CLI config template
+│   ├── gemini.json    # Gemini CLI config template
+│   └── roo.json       # Roo Code config template
 └── README.md          # This file
 ```
 
@@ -52,7 +55,7 @@ configs/
 | **OpenCode** | `AGENTS.md`, `skills/` | Skills in project or `~/.opencode/skills/` |
 | **Zed** | `.rules`, `AGENTS.md` | Reads multiple formats |
 | **Cline** | `.clinerules/`, `AGENTS.md` | Reads both |
-| **Roo Code** | `.clinerules/`, `AGENTS.md` | Cline-compatible |
+| **Roo Code** | `.roorules`, `.clinerules/`, `.roo/mcp.json`, `AGENTS.md` | Uses Roo MCP settings files |
 | **Continue.dev** | `.continue/rules/` | YAML frontmatter format |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | In `.github/` |
 | **Antigravity** | `~/.gemini/antigravity/mcp_config.json` | JSON format |
@@ -164,6 +167,7 @@ description: When to use
 cp configs/rules/cursor.md .cursorrules
 cp configs/rules/cursor.md .windsurfrules
 cp configs/rules/cursor.md .rules
+cp configs/rules/roocode.md .roorules
 cp configs/agents/AGENTS.md ./AGENTS.md
 cp configs/agents/CLAUDE.md ./CLAUDE.md
 
@@ -178,8 +182,8 @@ mkdir -p skills/opencode-mcp
 cp configs/rules/cursor.md .clinerules/rules.md
 cp configs/rules/continue.md .continue/rules/opencode.md
 cp configs/rules/copilot-instructions.md .github/copilot-instructions.md
-cp configs/skills/SKILL.md .claude/skills/opencode-mcp/
-cp configs/skills/SKILL.md skills/opencode-mcp/
+cp configs/skills/opencode-mcp/SKILL.md .claude/skills/opencode-mcp/
+cp configs/skills/opencode-mcp/SKILL.md skills/opencode-mcp/
 ```
 
 ### Global Installation
@@ -189,7 +193,7 @@ For personal preferences across all projects:
 ```bash
 # Claude Code global
 mkdir -p ~/.claude/skills/opencode-mcp
-cp configs/skills/SKILL.md ~/.claude/skills/opencode-mcp/
+cp configs/skills/opencode-mcp/SKILL.md ~/.claude/skills/opencode-mcp/
 
 # Cline global
 mkdir -p ~/.clinerules
