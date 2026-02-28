@@ -92,6 +92,66 @@ async function getWorkingDirectory(explicitDir?: string): Promise<{ directory: s
   return { directory: cwd, source: 'fallback' };
 }
 
+function extractMessageText(parts: unknown[]): string {
+  let content = '';
+  for (const part of parts) {
+    if (part && typeof part === 'object' && 'type' in part && part.type === 'text' && 'text' in part) {
+      content += String((part as { text: unknown }).text);
+    }
+  }
+  return content;
+}
+
+function isAssistantCompleted(info: unknown): boolean {
+  if (!info || typeof info !== 'object') return false;
+  if (!('role' in info) || (info as { role?: string }).role !== 'assistant') return false;
+  const time = (info as { time?: { completed?: number } }).time;
+  return typeof time?.completed === 'number';
+}
+
+function getMessageError(info: unknown): string | undefined {
+  if (!info || typeof info !== 'object') return undefined;
+  const error = (info as { error?: { name?: string; data?: { message?: string } } }).error;
+  if (!error) return undefined;
+  const name = error.name ?? 'UnknownError';
+  const message = error.data?.message ?? 'Unknown error';
+  return `${name}: ${message}`;
+}
+
+async function waitForMessageContent(
+  client: OpenCodeClient,
+  sessionId: string,
+  messageId: string,
+  timeoutMs = 60000,
+  pollIntervalMs = 1000
+): Promise<{ content: string; error?: string; completed: boolean }>
+{
+  const start = Date.now();
+  let lastContent = '';
+
+  while (Date.now() - start < timeoutMs) {
+    const message = await client.getSessionMessage(sessionId, messageId);
+    const parts = Array.isArray(message?.parts) ? message.parts : [];
+    const content = extractMessageText(parts);
+    const error = getMessageError(message?.info);
+    const completed = isAssistantCompleted(message?.info);
+
+    if (content) {
+      return { content, error, completed: true };
+    }
+
+    lastContent = content || lastContent;
+
+    if (completed) {
+      return { content: lastContent, error, completed: true };
+    }
+
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+  }
+
+  return { content: lastContent, completed: false };
+}
+
 // ============================================================================
 // Input Schemas (exported for MCP SDK)
 // ============================================================================
@@ -235,11 +295,23 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
           noReply: params.noReply,
         });
 
+        let content = result.content;
+        let messageError: string | undefined;
+
+        if (!params.noReply && result.messageId) {
+          const waited = await waitForMessageContent(client, session.id, result.messageId);
+          if (waited.content) {
+            content = waited.content;
+          }
+          messageError = waited.error;
+        }
+
         return {
           content: [{ type: 'text' as const, text: JSON.stringify({
             sessionId: result.sessionId,
             messageId: result.messageId,
-            content: result.content,
+            content,
+            error: messageError,
             workingDirectory: workingDir.directory,
             directorySource: workingDir.source,
             sessionDirectory: session.directory,
@@ -302,8 +374,23 @@ export function createExecutionHandlers(client: OpenCodeClient, defaultModel?: s
           noReply: params.noReply,
         });
 
+        let content = result.content;
+        let messageError: string | undefined;
+
+        if (!params.noReply && result.messageId) {
+          const waited = await waitForMessageContent(client, params.sessionId, result.messageId);
+          if (waited.content) {
+            content = waited.content;
+          }
+          messageError = waited.error;
+        }
+
         return {
-          content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+          content: [{ type: 'text' as const, text: JSON.stringify({
+            ...result,
+            content,
+            error: messageError,
+          }, null, 2) }],
         };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);

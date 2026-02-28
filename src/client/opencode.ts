@@ -61,6 +61,7 @@ export interface OpenCodeClient {
   listSessions(): Promise<unknown[]>;
   createSession(title?: string, model?: { providerID: string; modelID: string }, directory?: string): Promise<{ id: string; title?: string; directory?: string }>;
   getSession(id: string): Promise<unknown>;
+  getSessionMessage(sessionId: string, messageId: string): Promise<{ info?: unknown; parts?: unknown[] }>;
   abortSession(id: string): Promise<boolean>;
   shareSession(id: string): Promise<{ id: string; shareUrl?: string }>;
   prompt(sessionId: string, promptText: string, options?: PromptOptions): Promise<{ sessionId: string; messageId: string; content: string }>;
@@ -100,6 +101,16 @@ function validateWithSchema<T>(
     return data as T;
   }
   return result.data;
+}
+
+function extractTextFromParts(parts: unknown[]): string {
+  let content = '';
+  for (const part of parts) {
+    if (part && typeof part === 'object' && 'type' in part && part.type === 'text' && 'text' in part) {
+      content += String((part as { text: unknown }).text);
+    }
+  }
+  return content;
 }
 
 // ============================================================================
@@ -218,6 +229,15 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     return result.data;
   }
 
+  async function getSessionMessage(sessionId: string, messageId: string): Promise<{ info?: unknown; parts?: unknown[] }> {
+    await ensureConnected();
+    const result = await withTimeout(
+      () => client.session.message({ path: { id: sessionId, messageID: messageId } }),
+      'Get session message'
+    );
+    return result.data ?? {};
+  }
+
   async function abortSession(id: string): Promise<boolean> {
     await ensureConnected();
     const result = await withTimeout(
@@ -269,14 +289,7 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     const response = validateWithSchema(result.data, PromptResponseSchema, 'prompt');
     
     // Extract content from parts
-    let content = '';
-    if (response?.parts) {
-      for (const part of response.parts) {
-        if (part && typeof part === 'object' && 'type' in part && part.type === 'text' && 'text' in part) {
-          content += String(part.text);
-        }
-      }
-    }
+    const content = extractTextFromParts(response?.parts ?? []);
 
     return {
       sessionId,
@@ -405,6 +418,7 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     listSessions,
     createSession,
     getSession,
+    getSessionMessage,
     abortSession,
     shareSession,
     prompt,
