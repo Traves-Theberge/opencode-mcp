@@ -12,7 +12,7 @@ Rules for AI coding agents using the OpenCode MCP Server.
 
 MCP server that exposes OpenCode as a tool/subagent for IDEs and AI clients.
 
-## Available Tools (23)
+## Available Tools (21)
 
 | Category | Tools |
 |----------|-------|
@@ -21,7 +21,7 @@ MCP server that exposes OpenCode as a tool/subagent for IDEs and AI clients.
 | Config | model_list, model_configure, provider_list, config_get, config_update |
 | Agents | agent_list, agent_delegate |
 | Skills | skill_list, skill_create |
-| MCP | mcp_list, mcp_add, mcp_remove, mcp_enable |
+| MCP | mcp_list, mcp_enable |
 | Tools | tool_list |
 
 ## Tool Usage

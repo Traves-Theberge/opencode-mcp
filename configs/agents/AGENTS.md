@@ -4,7 +4,7 @@ Agent instructions for working with this MCP server.
 
 ## Project Overview
 
-This is an MCP (Model Context Protocol) server that exposes OpenCode as a tool/subagent for IDEs and AI clients. It provides 23 tools across 7 categories for coding tasks, file operations, configuration, and agent delegation.
+This is an MCP (Model Context Protocol) server that exposes OpenCode as a tool/subagent for IDEs and AI clients. It provides 21 tools across 7 categories for coding tasks, file operations, configuration, and agent delegation.
 
 ## Tech Stack
 

@@ -43,8 +43,6 @@ Skills for using the OpenCode MCP Server to accomplish coding tasks through Open
 
 ### MCP Tools
 - `opencode_mcp_list` - List MCP servers
-- `opencode_mcp_add` - Add an MCP server
-- `opencode_mcp_remove` - Remove an MCP server
 - `opencode_mcp_enable` - Enable/disable MCP server
 
 ### Tool Config

@@ -34,14 +34,14 @@ Understanding the OpenCode MCP Server architecture.
 │  └────────────────────────────────────────────────────────────────────┘  │
 │                              │                                            │
 │  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │                      Tool Registry (23 tools)                       │  │
+│  │                      Tool Registry (21 tools)                       │  │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │  │
 │  │  │Execution │ │  Files   │ │  Config  │ │  Agents  │ │  Skills  │ │  │
 │  │  │  (5)     │ │  (4)     │ │  (5)     │ │  (2)     │ │  (2)     │ │  │
 │  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘ │  │
 │  │  ┌──────────┐ ┌──────────┐                                           │  │
 │  │  │   MCP    │ │   Tool   │                                           │  │
-│  │  │  (4)     │ │ Config(1)│                                           │  │
+│  │  │  (2)     │ │ Config(1)│                                           │  │
 │  │  └──────────┘ └──────────┘                                           │  │
 │  └────────────────────────────────────────────────────────────────────┘  │
 │                              │                                            │
@@ -96,7 +96,7 @@ The core MCP protocol implementation using `@modelcontextprotocol/sdk`.
 
 ### 3. Tool Registry
 
-Organized collection of 23 tools across 7 categories:
+Organized collection of 21 tools across 7 categories:
 
 | Category | Tools | Purpose |
 |----------|-------|---------|
@@ -105,7 +105,7 @@ Organized collection of 23 tools across 7 categories:
 | Config | 5 | Model/provider configuration |
 | Agents | 2 | Agent listing and delegation |
 | Skills | 2 | Skill discovery and creation |
-| MCP | 4 | Sub-MCP server management |
+| MCP | 2 | Sub-MCP server management |
 | Tools | 1 | Tool listing |
 
 ### 4. OpenCode Client
@@ -157,7 +157,7 @@ server.tool('opencode_my_tool', 'Description', schema, annotations, handler);
 
 ## Tool Annotations
 
-All 23 tools include MCP-compliant annotations for better LLM discoverability:
+All 21 tools include MCP-compliant annotations for better LLM discoverability:
 
 | Annotation | Description |
 |------------|-------------|

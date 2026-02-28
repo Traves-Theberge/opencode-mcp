@@ -188,13 +188,11 @@ export async function registerAllTools(
   s.tool('opencode_skill_list', 'List all available skills from SKILL.md files. Skills are reusable behavior definitions that can be loaded on-demand.', skillSchemas.EmptySchema, TOOL_ANNOTATIONS.opencode_skill_list, skillHandlers.opencode_skill_list);
   s.tool('opencode_skill_create', 'Create a new skill (SKILL.md file). Skills are reusable prompt templates for specialized tasks. Returns the skill content to save manually.', skillSchemas.SkillCreateInputSchema, TOOL_ANNOTATIONS.opencode_skill_create, skillHandlers.opencode_skill_create);
 
-  // Register MCP management tools (4 tools)
+  // Register MCP management tools (2 tools)
   const { createMcpHandlers: createMcp, INPUT_SCHEMAS: mcpSchemas } = await import('./mcp.js');
   const mcpHandlers = createMcp(client);
   
   s.tool('opencode_mcp_list', 'List all configured MCP servers and their connection status.', mcpSchemas.EmptySchema, TOOL_ANNOTATIONS.opencode_mcp_list, mcpHandlers.opencode_mcp_list);
-  s.tool('opencode_mcp_add', 'Add a new MCP server to OpenCode. Supports local (stdio) and remote (HTTP) servers. Returns configuration to add manually.', mcpSchemas.McpAddInputSchema, TOOL_ANNOTATIONS.opencode_mcp_add, mcpHandlers.opencode_mcp_add);
-  s.tool('opencode_mcp_remove', 'Remove an MCP server from OpenCode configuration.', mcpSchemas.McpRemoveInputSchema, TOOL_ANNOTATIONS.opencode_mcp_remove, mcpHandlers.opencode_mcp_remove);
   s.tool('opencode_mcp_enable', 'Enable or disable an MCP server.', mcpSchemas.McpEnableInputSchema, TOOL_ANNOTATIONS.opencode_mcp_enable, mcpHandlers.opencode_mcp_enable);
 
   // Register tool config tools (1 tool)

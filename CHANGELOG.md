@@ -179,10 +179,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `opencode_skill_list` - List skills
   - `opencode_skill_load` - Load skills
   - `opencode_skill_create` - Create skills
-- **MCP Tools (4)**:
+- **MCP Tools (2)**:
   - `opencode_mcp_list` - List MCP servers
-  - `opencode_mcp_add` - Add MCP servers
-  - `opencode_mcp_remove` - Remove MCP servers
   - `opencode_mcp_enable` - Enable/disable MCP servers
 - **Tool Config Tools (3)**:
   - `opencode_tool_list` - List tools

@@ -11,9 +11,9 @@ Complete reference for all OpenCode MCP Server tools.
 | Config | 5 | `opencode_model_*`, `opencode_config_*`, `opencode_provider_*` |
 | Agents | 2 | `opencode_agent_*` |
 | Skills | 2 | `opencode_skill_*` |
-| MCP | 4 | `opencode_mcp_*` |
+| MCP | 2 | `opencode_mcp_*` |
 | Tools | 1 | `opencode_tool_list` |
-| **Total** | **23** | |
+| **Total** | **21** | |
 
 ---
 
@@ -57,8 +57,6 @@ All tools include MCP-compliant annotations for LLM discoverability:
 | `opencode_config_update` | ✓ | ✓ | Changes configuration |
 | `opencode_agent_delegate` | ✓ | ✓ | May execute changes |
 | `opencode_skill_create` | ✗ | ✓ | Creates new skill |
-| `opencode_mcp_add` | ✗ | ✓ | Adds MCP server |
-| `opencode_mcp_remove` | ✓ | ✓ | Removes MCP server |
 | `opencode_mcp_enable` | ✓ | ✓ | Changes server state |
 
 ---
@@ -509,43 +507,6 @@ List all configured MCP servers.
 **Annotations**: `readOnlyHint: true`, `idempotentHint: true`, `openWorldHint: true`
 
 **Input Schema**: `{}`
-
----
-
-### `opencode_mcp_add`
-
-Add a new MCP server.
-
-**Annotations**: `destructiveHint: false`, `openWorldHint: true`
-
-**Input Schema**:
-```json
-{
-  "name": "string (required) - Unique server name",
-  "type": "string (required) - 'local' or 'remote'",
-  "command": "string[] (optional) - Command for local servers",
-  "environment": "object (optional) - Environment variables",
-  "url": "string (optional) - URL for remote servers",
-  "headers": "object (optional) - Headers for remote servers",
-  "enabled": "boolean (optional) - Enable on startup",
-  "timeout": "number (optional) - Connection timeout in ms"
-}
-```
-
----
-
-### `opencode_mcp_remove`
-
-Remove an MCP server.
-
-**Annotations**: `destructiveHint: true`, `openWorldHint: true`
-
-**Input Schema**:
-```json
-{
-  "name": "string (required) - Server name to remove"
-}
-```
 
 ---
 

@@ -135,8 +135,6 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
 
   // MCP management tools
   opencode_mcp_list: ANNOTATIONS.readOnlyExternal,
-  opencode_mcp_add: ANNOTATIONS.create,
-  opencode_mcp_remove: ANNOTATIONS.writeExternal,
   opencode_mcp_enable: ANNOTATIONS.writeExternal,
 
   // Tool config tools

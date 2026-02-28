@@ -178,12 +178,10 @@ See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for
 | `opencode_skill_list` | List available skills |
 | `opencode_skill_create` | Create a skill |
 
-### MCP Management (4)
+### MCP Management (2)
 | Tool | Description |
 |------|-------------|
 | `opencode_mcp_list` | List MCP servers |
-| `opencode_mcp_add` | Add an MCP server |
-| `opencode_mcp_remove` | Remove an MCP server |
 | `opencode_mcp_enable` | Enable/disable MCP server |
 
 ### Tool Config (1)

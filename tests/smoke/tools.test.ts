@@ -132,17 +132,11 @@ describe('Smoke Tests - Tools', () => {
       const { getMcpToolDefinitions } = await import('../../src/server/tools/mcp.js');
       const definitions = getMcpToolDefinitions();
       
-      expect(definitions.length).toBe(4);
+      expect(definitions.length).toBe(2);
       
       const mcpList = definitions.find(t => t.name === 'opencode_mcp_list');
       expect(mcpList).toBeDefined();
       expect(mcpList?.description).toContain('MCP');
-      
-      const mcpAdd = definitions.find(t => t.name === 'opencode_mcp_add');
-      expect(mcpAdd).toBeDefined();
-      
-      const mcpRemove = definitions.find(t => t.name === 'opencode_mcp_remove');
-      expect(mcpRemove).toBeDefined();
       
       const mcpEnable = definitions.find(t => t.name === 'opencode_mcp_enable');
       expect(mcpEnable).toBeDefined();
@@ -164,7 +158,7 @@ describe('Smoke Tests - Tools', () => {
       const { getAllToolDefinitions } = await import('../../src/server/tools/index.js');
       const definitions = getAllToolDefinitions();
       
-      expect(definitions.length).toBe(23);
+      expect(definitions.length).toBe(21);
       
       for (const tool of definitions) {
         expect(tool.name).toBeTruthy();

@@ -195,7 +195,7 @@ Control which tools are available:
 1. Start OpenCode TUI
 2. Run `/mcp` command
 3. Verify `opencode` server is listed
-4. Check tool count (23 tools)
+4. Check tool count (21 tools)
 
 ## Troubleshooting
 
