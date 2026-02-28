@@ -1,6 +1,6 @@
 {
   "name": "@opencode-mcp/server",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "MCP server that exposes OpenCode as a tool/subagent for IDEs and AI clients",
   "type": "module",
   "main": "dist/index.js",

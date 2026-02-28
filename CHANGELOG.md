@@ -5,6 +5,16 @@ All notable changes to the OpenCode MCP Server project will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-27
+
+### Removed
+- `opencode_mcp_add` and `opencode_mcp_remove` tools (configuration is managed via `opencode.json` and the TUI)
+- Tool count reduced from 23 to 21
+
+### Changed
+- MCP management now focuses on listing and enable/disable actions
+- Documentation updated to reflect 21 tools and the MCP tool changes
+
 ## [0.2.2] - 2025-02-22
 
 ### Added

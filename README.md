@@ -23,7 +23,7 @@ OpenCode MCP Server allows any MCP-compatible client (Cursor, Windsurf, Claude D
 ## Features
 
 - **Full OpenCode Integration**: Access all OpenCode capabilities via MCP tools
-- **23 Tools**: Streamlined toolset for coding, config, agents, skills, and MCP management
+- **21 Tools**: Streamlined toolset for coding, config, agents, skills, and MCP management
 - **Hybrid Config Persistence**: Config changes apply immediately AND persist to `opencode.json`
 - **Tool Annotations**: MCP-compliant annotations for better LLM discoverability
 - **Dual Transport**: stdio (local) and HTTP (remote) with stateless/stateful modes
@@ -34,7 +34,7 @@ OpenCode MCP Server allows any MCP-compatible client (Cursor, Windsurf, Claude D
 - **Session Management**: Create and manage coding sessions
 - **Agent Delegation**: Delegate tasks to specialized agents (build, plan, explore)
 - **Skill System**: Discover and create reusable skill definitions
-- **MCP Management**: Dynamically add/remove MCP servers
+- **MCP Management**: List and enable/disable MCP servers
 
 ## Quick Start
 
@@ -138,7 +138,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 See [docs/setup-guides/](docs/setup-guides/) for complete setup instructions for all supported IDEs.
 
-## Available Tools (23)
+## Available Tools (21)
 
 ### Execution (5)
 | Tool | Description |
