@@ -67,6 +67,7 @@ All guides use these environment variables:
 | `OPENCODE_LOG_LEVEL` | Log level (debug, info, warn, error) | `info` |
 | `MCP_TRANSPORT` | Transport mode | `stdio` |
 | `MCP_HTTP_PORT` | HTTP port | `3000` |
+| `MCP_HTTP_HOST` | HTTP bind address | `127.0.0.1` |
 
 ## Prerequisites
 

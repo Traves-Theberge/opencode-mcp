@@ -5,6 +5,19 @@ All notable changes to the OpenCode MCP Server project will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- HTTP transport: stateless `/mcp` failed with `Already connected to a transport` (HTTP 500) from the second client on, because one `McpServer` instance was shared by all requests. Each request now gets its own server instance.
+- HTTP transport: non-initialize requests (e.g. `tools/list`) were handled by a transport that was never connected to a server.
+
+### Added
+- `MCP_HTTP_HOST` environment variable to set the HTTP bind address (default `127.0.0.1`).
+
+### Changed
+- `GET /mcp` now responds `405` in stateless mode instead of opening an SSE stream that could never deliver messages.
+- `startHTTPServer`/`createHTTPTransport` take an `McpServer` factory instead of a single instance.
+
 ## [0.3.0] - 2026-02-27
 
 ### Removed

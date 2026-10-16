@@ -39,17 +39,18 @@ export async function createMCPServer(options?: CreateServerOptions): Promise<MC
   let connected = false;
   let httpServer: { close: () => void } | undefined;
 
-  // Create MCP server
-  const mcpServer = new McpServer({
-    name: serverName,
-    version: serverVersion,
-  });
-
   // Create OpenCode client
   const client = await createClient(config);
 
-  // Register all tools
-  await registerAllTools(mcpServer, client, config.defaultModel);
+  // Each MCP connection needs its own McpServer instance (one transport per server)
+  const createServer = async (): Promise<McpServer> => {
+    const server = new McpServer({
+      name: serverName,
+      version: serverVersion,
+    });
+    await registerAllTools(server, client, config.defaultModel);
+    return server;
+  };
 
   return {
     async connect() {
@@ -60,7 +61,7 @@ export async function createMCPServer(options?: CreateServerOptions): Promise<MC
         const port = options?.httpPort ?? config.httpPort ?? 3000;
         const hostname = options?.httpHostname ?? '127.0.0.1';
         
-        httpServer = await startHTTPServer(mcpServer, {
+        httpServer = await startHTTPServer(createServer, {
           port,
           hostname,
           corsOrigins: options?.corsOrigins,
@@ -70,6 +71,7 @@ export async function createMCPServer(options?: CreateServerOptions): Promise<MC
       } else {
         // Use stdio transport (default)
         const stdioTransport = new StdioServerTransport();
+        const mcpServer = await createServer();
         await mcpServer.connect(stdioTransport);
         connected = true;
       }
@@ -98,6 +100,7 @@ export async function startServer(): Promise<void> {
   const server = await createMCPServer({
     transport: transport as 'stdio' | 'http',
     httpPort: process.env.MCP_HTTP_PORT ? parseInt(process.env.MCP_HTTP_PORT, 10) : undefined,
+    httpHostname: process.env.MCP_HTTP_HOST ?? '127.0.0.1',
     corsOrigins: process.env.MCP_CORS_ORIGINS?.split(','),
   });
   

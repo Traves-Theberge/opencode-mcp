@@ -198,3 +198,4 @@ Zed reads from multiple locations automatically:
 | `OPENCODE_LOG_LEVEL` | `info` | Log level |
 | `MCP_TRANSPORT` | `stdio` | Transport mode |
 | `MCP_HTTP_PORT` | `3000` | HTTP port |
+| `MCP_HTTP_HOST` | `127.0.0.1` | HTTP bind address |

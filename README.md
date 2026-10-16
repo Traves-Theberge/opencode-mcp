@@ -310,6 +310,7 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=3000 npx @opencode-mcp/server
 | `OPENCODE_LOG_TIMESTAMP` | `false` | Include timestamps in logs |
 | `MCP_TRANSPORT` | `stdio` | Transport mode (stdio or http) |
 | `MCP_HTTP_PORT` | `3000` | HTTP port |
+| `MCP_HTTP_HOST` | `127.0.0.1` | HTTP bind address |
 | `MCP_CORS_ORIGINS` | `*` | CORS origins (comma-separated, restrict in production) |
 
 ## Config Persistence

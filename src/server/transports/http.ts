@@ -28,7 +28,7 @@
  * 
  * - `GET /health` - Health check endpoint
  * - `POST /mcp` - Stateless MCP requests
- * - `GET /mcp` - SSE streaming for stateless mode
+ * - `GET /mcp` - Not supported in stateless mode (405)
  * - `POST /mcp/:sessionId` - Stateful MCP requests
  * - `GET /mcp/:sessionId` - SSE streaming for stateful mode
  * - `DELETE /mcp/:sessionId` - Close a stateful session
@@ -57,6 +57,9 @@ export interface HTTPTransportOptions {
  */
 const sessionTransports = new Map<string, StreamableHTTPServerTransport>();
 
+/** Creates a fresh McpServer with all tools registered */
+export type McpServerFactory = () => Promise<McpServer>;
+
 /**
  * Security headers middleware
  */
@@ -72,7 +75,7 @@ function securityHeaders(_req: express.Request, res: express.Response, next: exp
  * Create an HTTP server with MCP Streamable HTTP transport
  */
 export async function createHTTPTransport(
-  mcpServer: McpServer,
+  createServer: McpServerFactory,
   options: HTTPTransportOptions
 ): Promise<express.Application> {
   const app = express();
@@ -102,37 +105,28 @@ export async function createHTTPTransport(
 
   // MCP endpoint - STATELESS mode (handles all MCP communication)
   app.all('/mcp', async (req, res) => {
-    // Create a new transport for each request (stateless)
+    if (req.method !== 'POST') {
+      // Stateless mode has no standalone SSE stream and no session to delete
+      res.status(405).json({
+        error: 'Method not allowed',
+        allowed_methods: ['POST'],
+      });
+      return;
+    }
+
+    // Create a new server and transport for each request (stateless)
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined, // Stateless mode - no session ID
     });
-    
+
     try {
-      // Handle the request
-      if (req.method === 'POST') {
-        // Check if this is an initialize request
-        const body = req.body;
-        if (isInitializeRequest(body)) {
-          // Connect the server to the transport
-          await mcpServer.connect(transport);
-        }
-        
-        // Handle the request through the transport
-        await transport.handleRequest(req, res, body);
-      } else if (req.method === 'GET') {
-        // SSE support for streaming
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        
-        // For GET requests, we need to establish SSE connection
-        await transport.handleRequest(req, res);
-      } else {
-        res.status(405).json({ 
-          error: 'Method not allowed',
-          allowed_methods: ['GET', 'POST'],
-        });
-      }
+      const server = await createServer();
+      res.on('close', () => {
+        transport.close().catch(() => undefined);
+        server.close().catch(() => undefined);
+      });
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
     } catch (error) {
       console.error('Error handling MCP request:', error);
       if (!res.headersSent) {
@@ -164,7 +158,8 @@ export async function createHTTPTransport(
         // Check if this is an initialize request
         const body = req.body;
         if (isInitializeRequest(body)) {
-          await mcpServer.connect(transport);
+          const server = await createServer();
+          await server.connect(transport);
         }
         await transport.handleRequest(req, res, body);
       } else if (req.method === 'GET') {
@@ -213,8 +208,7 @@ export async function createHTTPTransport(
           content_type: 'application/json',
         },
         'GET /mcp': {
-          description: 'SSE streaming for stateless mode',
-          content_type: 'text/event-stream',
+          description: 'Not supported in stateless mode (responds 405)',
         },
         'POST /mcp/:sessionId': {
           description: 'Stateful MCP requests with session',
@@ -250,10 +244,10 @@ export async function createHTTPTransport(
  * Start the HTTP server
  */
 export async function startHTTPServer(
-  mcpServer: McpServer,
+  createServer: McpServerFactory,
   options: HTTPTransportOptions
 ): Promise<{ app: express.Application; close: () => void }> {
-  const app = await createHTTPTransport(mcpServer, options);
+  const app = await createHTTPTransport(createServer, options);
   
   return new Promise((resolve) => {
     const server = app.listen(options.port, options.hostname, () => {

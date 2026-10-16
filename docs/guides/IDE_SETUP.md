@@ -160,6 +160,7 @@ Add to `~/.continue/config.json`:
 | `OPENCODE_TIMEOUT` | Request timeout in ms | `120000` |
 | `MCP_TRANSPORT` | Transport mode: `stdio` or `http` | `stdio` |
 | `MCP_HTTP_PORT` | HTTP port (if transport=http) | `3000` |
+| `MCP_HTTP_HOST` | HTTP bind address (if transport=http) | `127.0.0.1` |
 | `MCP_CORS_ORIGINS` | CORS origins (comma-separated) | `*` |
 
 ---

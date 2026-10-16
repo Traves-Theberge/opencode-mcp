@@ -240,6 +240,7 @@ Key settings:
 - `OPENCODE_LOG_LEVEL`: Logging verbosity
 - `MCP_TRANSPORT`: stdio or http
 - `MCP_HTTP_PORT`: HTTP port for http transport
+- `MCP_HTTP_HOST`: HTTP bind address for http transport (default `127.0.0.1`)
 
 ## Data Flow
 
