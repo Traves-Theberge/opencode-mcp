@@ -45,13 +45,6 @@ const FileContentSchema = z.object({
   content: z.union([z.string(), z.unknown()]),
 }).passthrough();
 
-const PromptResponseSchema = z.object({
-  parts: z.array(z.unknown()).optional(),
-  info: z.object({
-    id: z.string().optional(),
-  }).passthrough().optional(),
-}).passthrough();
-
 // ============================================================================
 // Client Interface
 // ============================================================================
@@ -103,16 +96,6 @@ function validateWithSchema<T>(
   return result.data;
 }
 
-function extractTextFromParts(parts: unknown[]): string {
-  let content = '';
-  for (const part of parts) {
-    if (part && typeof part === 'object' && 'type' in part && part.type === 'text' && 'text' in part) {
-      content += String((part as { text: unknown }).text);
-    }
-  }
-  return content;
-}
-
 // ============================================================================
 // Client Factory
 // ============================================================================
@@ -123,14 +106,115 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
   
   console.error(`[createClient] Server URL: ${config.serverUrl}`);
   console.error(`[createClient] Default directory: ${defaultDirectory ?? 'not set'}`);
+
+  // v2 API uses Basic auth: username "opencode", password from service.json / env
+  const password = config.serverPassword ?? process.env.OPENCODE_PASSWORD;
+  const authHeader = password
+    ? `Basic ${Buffer.from(`opencode:${password}`).toString('base64')}`
+    : undefined;
+  if (!authHeader) {
+    console.error('[createClient] WARNING: no server password found (OPENCODE_PASSWORD / service.json) — requests may fail with 401');
+  }
+
+  const authFetch = authHeader
+    ? (request: Request): ReturnType<typeof fetch> => {
+        const headers = new Headers(request.headers);
+        headers.set('authorization', authHeader);
+        return fetch(new Request(request, { headers }));
+      }
+    : undefined;
   
   const client = createOpencodeClient({
     baseUrl: config.serverUrl,
     directory: defaultDirectory,
+    responseStyle: 'data',
+    ...(authFetch && { fetch: authFetch }),
   });
 
   let connected = false;
   const timeout = config.timeout ?? 120000;
+
+  const apiHeaders: Record<string, string> = { accept: 'application/json' };
+  if (authHeader) {
+    apiHeaders.authorization = authHeader;
+  }
+
+  function unwrap<T>(body: unknown): T {
+    if (body && typeof body === 'object' && 'data' in (body as Record<string, unknown>)) {
+      return (body as Record<string, unknown>).data as T;
+    }
+    return body as T;
+  }
+
+  async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const res = await fetch(`${config.serverUrl}${path}`, {
+      method,
+      headers: {
+        ...apiHeaders,
+        ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`OpenCode API ${method} ${path} failed (${res.status}): ${text.slice(0, 300)}`);
+    }
+    if (!text) {
+      return undefined as T;
+    }
+    return unwrap<T>(JSON.parse(text));
+  }
+
+  function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  interface V2Message {
+    id: string;
+    time: { created: number };
+    type: 'user' | 'assistant' | 'idle' | string;
+    agent?: string;
+    content?: Array<{ type: string; text?: string }>;
+  }
+
+  async function waitForIdle(sessionId: string, since: number): Promise<V2Message[]> {
+    const deadline = Date.now() + timeout;
+    for (;;) {
+      await sleep(2000);
+      const messages = await api<V2Message[]>(
+        'GET',
+        `/session/${encodeURIComponent(sessionId)}/message?limit=30`
+      );
+      const idle = Array.isArray(messages)
+        ? messages.find((m) => m.type === 'idle' && m.time.created >= since)
+        : undefined;
+      if (idle) {
+        return Array.isArray(messages) ? messages : [];
+      }
+      if (Date.now() >= deadline) {
+        throw new OpenCodeMCPError(
+          `Prompt timed out after ${timeout}ms (session ${sessionId}) — poll opencode_session_list / message API for the result`,
+          ErrorCodes.TIMEOUT
+        );
+      }
+    }
+  }
+
+  function extractAssistantText(messages: V2Message[], idleCreated: number): { id: string; text: string } {
+    const assistants = messages.filter(
+      (m) => m.type === 'assistant' && m.time.created <= idleCreated
+    );
+    assistants.sort((a, b) => b.time.created - a.time.created);
+    const latest = assistants[0];
+    if (!latest) {
+      return { id: '', text: '' };
+    }
+    const text = (latest.content ?? [])
+      .filter((p) => p.type === 'text' && typeof p.text === 'string')
+      .map((p) => p.text as string)
+      .join('\n');
+    return { id: latest.id, text };
+  }
 
   /**
    * Execute an async operation with timeout
@@ -187,36 +271,42 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
   }
 
   async function createSession(
-    title?: string, 
-    _model?: { providerID: string; modelID: string },
+    title?: string,
+    model?: { providerID: string; modelID: string },
     directory?: string
   ): Promise<{ id: string; title?: string; directory?: string }> {
     await ensureConnected();
-    
+
     // Use provided directory or default from env
     const effectiveDirectory = directory ?? process.env.OPENCODE_DEFAULT_PROJECT;
-    
+
     // Debug logging
     console.error(`[createSession] Requested directory: ${directory ?? 'not specified'}`);
     console.error(`[createSession] Effective directory: ${effectiveDirectory ?? 'not specified'}`);
-    
-    const result = await withTimeout(
-      () => client.session.create({ 
-        body: { title },
-        query: effectiveDirectory ? { directory: effectiveDirectory } : undefined,
-      }),
+
+    // v2 API: directory goes in body.location (query param is ignored by the server)
+    const created = await withTimeout(
+      () => api<{ id: string; title?: string; location?: { directory?: string } }>(
+        'POST',
+        '/session',
+        {
+          ...(title ? { title } : {}),
+          ...(effectiveDirectory ? { location: { directory: effectiveDirectory } } : {}),
+          ...(model ? { model } : {}),
+        }
+      ),
       'Create session'
     );
-    
-    const session = validateWithSchema(result.data, SessionSchema, 'createSession');
-    
+
+    const session = validateWithSchema(created, SessionSchema, 'createSession');
+
     // Log what we got back
     console.error(`[createSession] Session response:`, JSON.stringify(session, null, 2));
-    
-    return { 
-      id: session?.id ?? '', 
+
+    return {
+      id: session?.id ?? '',
       title: session?.title,
-      directory: session?.directory,
+      directory: (created as { location?: { directory?: string } })?.location?.directory ?? effectiveDirectory,
     };
   }
 
@@ -240,11 +330,12 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
 
   async function abortSession(id: string): Promise<boolean> {
     await ensureConnected();
-    const result = await withTimeout(
-      () => client.session.abort({ path: { id } }),
+    // v2 API uses /interrupt (SDK's /abort does not exist on the v2 server)
+    await withTimeout(
+      () => api('POST', `/session/${encodeURIComponent(id)}/interrupt`, {}),
       'Abort session'
     );
-    return result.data === true;
+    return true;
   }
 
   async function shareSession(id: string): Promise<{ id: string; shareUrl?: string }> {
@@ -272,29 +363,37 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
     options?: PromptOptions
   ): Promise<{ sessionId: string; messageId: string; content: string }> {
     await ensureConnected();
-    
-    const result = await withTimeout(
-      () => client.session.prompt({
-        path: { id: sessionId },
-        body: {
-          parts: [{ type: 'text', text: promptText }],
+
+    // v2 API: POST /session/{id}/prompt with {text} (SDK's /message POST 404s on v2).
+    // The call only queues the turn — poll messages until the idle marker appears.
+    const since = Date.now();
+    const posted = await withTimeout(
+      () =>
+        api<{ id: string }>('POST', `/session/${encodeURIComponent(sessionId)}/prompt`, {
+          text: promptText,
           ...(options?.model && { model: options.model }),
           ...(options?.agent && { agent: options.agent }),
           ...(options?.noReply && { noReply: true }),
-        },
-      }),
+        }),
       'Send prompt'
     );
 
-    const response = validateWithSchema(result.data, PromptResponseSchema, 'prompt');
-    
-    // Extract content from parts
-    const content = extractTextFromParts(response?.parts ?? []);
+    if (options?.noReply) {
+      return { sessionId, messageId: posted?.id ?? '', content: '' };
+    }
+
+    const messages = await waitForIdle(sessionId, since);
+    const idleCreated = Math.max(
+      ...messages
+        .filter((m) => m.type === 'idle' && m.time.created >= since)
+        .map((m) => m.time.created)
+    );
+    const { id, text } = extractAssistantText(messages, idleCreated);
 
     return {
       sessionId,
-      messageId: response?.info?.id ?? '',
-      content,
+      messageId: id || posted?.id || '',
+      content: text,
     };
   }
 
@@ -311,18 +410,33 @@ export async function createClient(config: ServerConfig): Promise<OpenCodeClient
 
   async function listProviders(): Promise<{ providers: unknown[]; defaults: Record<string, string> }> {
     await ensureConnected();
-    const result = await withTimeout(
-      () => client.config.providers(),
-      'List providers'
+    // v2 server dropped /config/providers — join /provider with /model (grouped by providerID)
+    const [providers, models] = await withTimeout(async () => {
+      const [p, m] = await Promise.all([
+        api<unknown[]>('GET', '/provider'),
+        api<Array<{ id?: string; modelID?: string; providerID?: string; name?: string }>>('GET', '/model'),
+      ]);
+      return [Array.isArray(p) ? p : [], Array.isArray(m) ? m : []] as const;
+    }, 'List providers');
+    const byProvider = new Map<string, Array<{ id: string; name: string }>>();
+    for (const m of models) {
+      const pid = m.providerID ?? '';
+      const entry = { id: m.modelID ?? m.id ?? '', name: m.name ?? m.modelID ?? m.id ?? '' };
+      if (!entry.id) {
+        continue;
+      }
+      const list = byProvider.get(pid) ?? [];
+      list.push(entry);
+      byProvider.set(pid, list);
+    }
+    const enriched = (providers as Array<{ id?: string } & Record<string, unknown>>).map((p) => ({
+      ...p,
+      models: byProvider.get(p.id ?? '') ?? [],
+    }));
+    const validated = enriched.map(
+      (p) => validateWithSchema(p, ProviderSchema, 'listProviders')
     );
-    const data = result.data;
-    const providers = (data?.providers ?? []).map(
-      p => validateWithSchema(p, ProviderSchema, 'listProviders')
-    );
-    return { 
-      providers, 
-      defaults: (data as { default?: Record<string, string> })?.default ?? {} 
-    };
+    return { providers: validated, defaults: {} };
   }
 
   async function updateConfig(config: Record<string, unknown>): Promise<unknown> {

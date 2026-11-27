@@ -13,7 +13,19 @@ export function loadConfig(): ServerConfig {
 
   // Load from environment variables
   if (process.env.OPENCODE_SERVER_URL) {
-    config.serverUrl = process.env.OPENCODE_SERVER_URL;
+    config.serverUrl = normalizeServerUrl(process.env.OPENCODE_SERVER_URL);
+  } else {
+    config.serverUrl = normalizeServerUrl(config.serverUrl);
+  }
+
+  // Server password: explicit env var wins, otherwise auto-read service.json
+  if (process.env.OPENCODE_PASSWORD) {
+    config.serverPassword = process.env.OPENCODE_PASSWORD;
+  } else {
+    const fromFile = readServicePassword();
+    if (fromFile) {
+      config.serverPassword = fromFile;
+    }
   }
 
   if (process.env.OPENCODE_AUTO_START !== undefined) {
@@ -51,6 +63,33 @@ export function loadConfig(): ServerConfig {
   }
 
   return config;
+}
+
+/**
+ * Normalize server URL for OpenCode v2 API.
+ * v2 serves the JSON API under /api/* — SDK uses /session style paths,
+ * so the base URL must end with /api. Appends it when missing.
+ */
+export function normalizeServerUrl(url: string): string {
+  return url.endsWith('/api') ? url : `${url.replace(/\/$/, '')}/api`;
+}
+
+/**
+ * Read password from ~/.config/opencode/service.json (written by `opencode serve`).
+ */
+export function readServicePassword(): string | undefined {
+  try {
+    const servicePath = join(homedir(), '.config', 'opencode', 'service.json');
+    if (!existsSync(servicePath)) {
+      return undefined;
+    }
+    const parsed = JSON.parse(readFileSync(servicePath, 'utf-8')) as { password?: unknown };
+    return typeof parsed.password === 'string' && parsed.password.length > 0
+      ? parsed.password
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**

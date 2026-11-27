@@ -9,6 +9,8 @@
 export interface ServerConfig {
   /** OpenCode server URL */
   serverUrl: string;
+  /** OpenCode server password (Basic auth as opencode:<password>). Falls back to ~/.config/opencode/service.json */
+  serverPassword?: string;
   /** Auto-start OpenCode server if not running */
   autoStart: boolean;
   /** Default timeout for operations in ms */
